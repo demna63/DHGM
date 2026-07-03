@@ -2,6 +2,10 @@
 # ლოკალურად macOS-ზე ეს build შეუძლებელია (NDK r12b / takthirdparty = Linux-only),
 # ამიტომ GCS-ის ანალოგიით: overlay ლოკალურად ვითარდება, APK აქ იწყობა.
 #
+# Container-ის გარეშე ვმუშაობთ (host runner + setup-java temurin 8):
+# ATAK-ის 3-არქიტექტურიან native build-ს ~30GB სჭირდება, runner-ს კი ~14GB აქვს —
+# ბალასტის წაშლა (dotnet, preinstalled Android, ghc…) მხოლოდ host-ზეა შესაძლებელი.
+#
 # საჭირო Secrets (repo Settings → Secrets and variables → Actions):
 #   DHGM_KEYSTORE_B64  — base64 < custom/keys/dhgm.keystore
 #   DHGM_KEYSTORE_PASS — პაროლი custom/keys/keystore.properties-დან
@@ -21,35 +25,46 @@ jobs:
     name: Assemble DHGM (CIV base)
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    container:
-      # openjdk:8-jdk ამოღებულია Docker Hub-იდან. jammy = Ubuntu 22.04 (pinned):
-      # pip 22 PEP-668-ს არ აწესებს (conan==1.59.0 სუფთად ჯდება), stable apt repo.
-      image: eclipse-temurin:8-jdk-jammy
     defaults:
       run:
         shell: bash
     steps:
+      - name: Free disk space (runner ballast)
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/share/boost /opt/hostedtoolcache/CodeQL /usr/local/share/powershell
+          sudo docker system prune -af >/dev/null 2>&1 || true
+          df -h /
+
+      - name: Set up JDK 8 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
       - name: Checkout DHGM (overlay)
         uses: actions/checkout@v4
 
       - name: Checkout ATAK-CIV
         run: |
-          apt update && apt -y install git-lfs
           git lfs install
           git clone --depth 1 --branch "$ATAK_REF" --recurse-submodules \
             https://github.com/deptofdefense/AndroidTacticalAssaultKit-CIV.git atak
           cd atak && git lfs fetch && git lfs checkout
 
       - name: Apply DHGM overlay
-        run: |
-          apt -y install rsync
-          ./tools/apply-dhgm-overlay.sh
+        run: ./tools/apply-dhgm-overlay.sh
 
       - name: Set environment
         run: |
-          apt -y install ant apg dos2unix autoconf automake g++ libtool patch make cmake ninja-build swig tclsh python3-pip unzip wget
-          pip3 install -U pip setuptools
-          pip3 install conan==1.59.0
+          sudo apt-get update
+          sudo apt-get -y install ant apg dos2unix autoconf automake g++ libtool patch make cmake ninja-build swig tcl unzip wget
+          # conan venv-ში — host pip PEP-668-ს აწესებს
+          python3 -m venv "$HOME/conan-venv"
+          "$HOME/conan-venv/bin/pip" install -q -U pip setuptools
+          "$HOME/conan-venv/bin/pip" install -q conan==1.59.0
+          echo "$HOME/conan-venv/bin" >> $GITHUB_PATH
           echo "ANDROID_COMPILE_SDK=29" >> $GITHUB_ENV
           echo "ANDROID_BUILD_TOOLS=29.0.3" >> $GITHUB_ENV
           echo "ANDROID_SDK_TOOLS=4333796" >> $GITHUB_ENV
@@ -93,6 +108,7 @@ jobs:
         run: |
           export PATH="$CMAKE_HOME/bin:$PATH"
           ./scripts/prebuild.sh
+          df -h /
 
       - name: Restore signing keystore
         run: |
