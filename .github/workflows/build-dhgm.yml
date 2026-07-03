@@ -56,12 +56,17 @@ jobs:
       - name: Apply DHGM overlay
         run: ./tools/apply-dhgm-overlay.sh
 
+      - name: Set up Python 3.10 (conan 1.59 + PyYAML wheels)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
       - name: Set environment
         run: |
           sudo apt-get update
           sudo apt-get -y install ant apg dos2unix autoconf automake g++ libtool patch make cmake ninja-build swig tcl unzip wget
-          # conan venv-ში — host pip PEP-668-ს აწესებს
-          python3 -m venv "$HOME/conan-venv"
+          # conan venv-ში Python 3.10-ით — 3.12-ზე PyYAML წყაროდან ვერ იწყობა (Cython 3)
+          python3.10 -m venv "$HOME/conan-venv"
           "$HOME/conan-venv/bin/pip" install -q -U pip setuptools
           "$HOME/conan-venv/bin/pip" install -q conan==1.59.0
           echo "$HOME/conan-venv/bin" >> $GITHUB_PATH
