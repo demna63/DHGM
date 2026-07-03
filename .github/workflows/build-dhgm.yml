@@ -163,14 +163,15 @@ jobs:
       - name: Assemble DHGM APK
         working-directory: atak/atak
         run: |
-          # JNI header-ები (atakjni.h ...) javah-ით — AGP 4.2-ში preExternalNativeBuild
-          # hook არ ეშვება ავტომატურად, native build კი header-ებზეა დამოკიდებული.
-          # ცალკე გამოძახება src/main/jni/*.h-ს დისკზე ქმნის → native build პოულობს.
-          ./gradlew :takkernel:engine:generateJniHeaders
-          ./gradlew assembleCivRelease
+          # ოფიციალური ATAK CI-ის იდენტური თანმიმდევრობა (assemble-sdk.yml):
+          # 1) JNI header-ები javah-ით (AGP hook ავტომატურად არ ეშვება)
+          # 2) civSdk ვარიანტი — assembleCivRelease-ისგან განსხვავებით configureConan-ის
+          #    remote-ს (შიდა TAK repo) არ ითხოვს; ესაა tak.gov-ის გავრცელებადი ვარიანტიც
+          ./gradlew generateJniHeaders
+          ./gradlew assembleCivSdk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DHGM-civ-release
+          name: DHGM-civ-sdk
           path: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
