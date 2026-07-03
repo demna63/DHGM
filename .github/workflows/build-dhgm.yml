@@ -162,7 +162,12 @@ jobs:
 
       - name: Assemble DHGM APK
         working-directory: atak/atak
-        run: ./gradlew assembleCivRelease
+        run: |
+          # JNI header-ები (atakjni.h ...) javah-ით — AGP 4.2-ში preExternalNativeBuild
+          # hook არ ეშვება ავტომატურად, native build კი header-ებზეა დამოკიდებული.
+          # ცალკე გამოძახება src/main/jni/*.h-ს დისკზე ქმნის → native build პოულობს.
+          ./gradlew :takkernel:engine:generateJniHeaders
+          ./gradlew assembleCivRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
