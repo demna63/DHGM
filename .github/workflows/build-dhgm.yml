@@ -107,11 +107,13 @@ jobs:
           tar xzf cmake.tar.gz
           echo "CMAKE_HOME=$PWD/cmake-3.14.7-Linux-x86_64" >> $GITHUB_ENV
 
-      - name: Cache takthirdparty builds
-        uses: actions/cache@v4
+      - name: Restore takthirdparty cache
+        id: ttp-cache
+        uses: actions/cache/restore@v4
         with:
           path: atak/takthirdparty/builds
-          key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}
+          key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-${{ github.run_id }}
+          restore-keys: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-
 
       - name: Build native dependencies (takthirdparty)
         working-directory: atak
@@ -128,6 +130,15 @@ jobs:
             fi
           done
           echo "✓ takthirdparty artifacts არსებობს სამივე არქიტექტურაზე"
+
+      # cache ინახება მაშინაც კი, თუ მომდევნო ეტაპი (gradle) ჩავარდა —
+      # 50-წუთიანი native build აღარ მეორდება ყოველ ცდაზე
+      - name: Save takthirdparty cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: atak/takthirdparty/builds
+          key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-${{ github.run_id }}
 
       - name: Restore signing keystore
         run: |
