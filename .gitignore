@@ -1,0 +1,9 @@
+# ATAK-CIV წყარო — root-ში იკლონება, repo-ში არ ხვდება (qgroundcontrol/-ის ანალოგი)
+/atak/
+
+# signing keystore + პაროლები — არასდროს repo-ში!
+/custom/keys/
+
+__pycache__/
+*.pyc
+.DS_Store

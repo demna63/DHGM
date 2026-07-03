@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DHGM — ქართული ლოკალიზაცია (values-ka overlay).
+     მხოლოდ upstream-ში არსებული name-ები! ახალი კანდიდატების სია:
+     python3 tools/extract-untranslated.py -->
+<resources>
+    <string name="ok">OK</string>
+    <string name="cancel">გაუქმება</string>
+    <string name="yes">დიახ</string>
+    <string name="no">არა</string>
+    <string name="done">მზადაა</string>
+    <string name="save">შენახვა</string>
+    <string name="confirm">დადასტურება</string>
+    <string name="delete">წაშლა </string>
+    <string name="edit">რედაქტირება</string>
+    <string name="send">გაგზავნა</string>
+    <string name="close">დახურვა</string>
+    <string name="back">უკან</string>
+    <string name="next">შემდეგი</string>
+    <string name="quit">გასვლა</string>
+    <string name="settings">პარამეტრები</string>
+    <string name="search">ძებნა</string>
+    <string name="tools">ხელსაწყოები</string>
+    <string name="details">დეტალები</string>
+    <string name="error">შეცდომა</string>
+    <string name="warning">გაფრთხილება</string>
+    <string name="name">სახელი</string>
+    <string name="type">ტიპი</string>
+    <string name="location">მდებარეობა </string>
+    <string name="distance">მანძილი</string>
+    <string name="speed">სიჩქარე</string>
+    <string name="bearing">აზიმუტი</string>
+    <string name="point">წერტილი</string>
+    <string name="route">მარშრუტი </string>
+    <string name="track">ტრეკი</string>
+    <string name="contact">კონტაქტი</string>
+    <string name="chat">ჩატი</string>
+    <string name="video">ვიდეო</string>
+</resources>

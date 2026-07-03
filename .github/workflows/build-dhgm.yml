@@ -1,0 +1,120 @@
+# DHGM APK build — ATAK-CIV-ის ოფიციალური assemble CI-ის ადაპტაცია.
+# ლოკალურად macOS-ზე ეს build შეუძლებელია (NDK r12b / takthirdparty = Linux-only),
+# ამიტომ GCS-ის ანალოგიით: overlay ლოკალურად ვითარდება, APK აქ იწყობა.
+#
+# საჭირო Secrets (repo Settings → Secrets and variables → Actions):
+#   DHGM_KEYSTORE_B64  — base64 < custom/keys/dhgm.keystore
+#   DHGM_KEYSTORE_PASS — პაროლი custom/keys/keystore.properties-დან
+name: Build DHGM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', '.github/workflows/build-dhgm.yml']
+
+env:
+  ATAK_REF: master   # ATAK-CIV-ის pinned ref — გაზარდე შეგნებულად, ტესტით
+
+jobs:
+  build:
+    name: Assemble DHGM (CIV base)
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    container:
+      image: openjdk:8-jdk
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout DHGM (overlay)
+        uses: actions/checkout@v4
+
+      - name: Checkout ATAK-CIV
+        run: |
+          apt update && apt -y install git-lfs
+          git lfs install
+          git clone --depth 1 --branch "$ATAK_REF" --recurse-submodules \
+            https://github.com/deptofdefense/AndroidTacticalAssaultKit-CIV.git atak
+          cd atak && git lfs fetch && git lfs checkout
+
+      - name: Apply DHGM overlay
+        run: |
+          apt -y install rsync
+          ./tools/apply-dhgm-overlay.sh
+
+      - name: Set environment
+        run: |
+          apt -y install ant apg dos2unix autoconf automake g++ libtool patch make cmake ninja-build swig tclsh python3-pip unzip wget
+          pip3 install -U pip setuptools
+          pip3 install conan==1.59.0
+          echo "ANDROID_COMPILE_SDK=29" >> $GITHUB_ENV
+          echo "ANDROID_BUILD_TOOLS=29.0.3" >> $GITHUB_ENV
+          echo "ANDROID_SDK_TOOLS=4333796" >> $GITHUB_ENV
+          echo "NDK_VERSION=12b" >> $GITHUB_ENV
+
+      - name: Set up Android SDK
+        run: |
+          wget --quiet --tries=0 --output-document=android-sdk.zip https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS}.zip
+          unzip -qq -d android-sdk-linux android-sdk.zip
+          mkdir -p ~/.android && touch ~/.android/repositories.cfg
+          echo y | android-sdk-linux/tools/bin/sdkmanager "platforms;android-${ANDROID_COMPILE_SDK}" >/dev/null
+          echo y | android-sdk-linux/tools/bin/sdkmanager "platform-tools" >/dev/null
+          echo y | android-sdk-linux/tools/bin/sdkmanager "build-tools;${ANDROID_BUILD_TOOLS}" >/dev/null
+          echo "ANDROID_HOME=$PWD/android-sdk-linux" >> $GITHUB_ENV
+          echo "$PWD/android-sdk-linux/platform-tools/" >> $GITHUB_PATH
+          set +o pipefail
+          yes | android-sdk-linux/tools/bin/sdkmanager --licenses
+          set -o pipefail
+
+      - name: Set up Android NDK r12b
+        run: |
+          wget --quiet --tries=0 --output-document=android-ndk.zip https://dl.google.com/android/repository/android-ndk-r${NDK_VERSION}-linux-x86_64.zip
+          unzip -qq android-ndk.zip
+          echo "ANDROID_NDK_HOME=$PWD/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
+          echo "ANDROID_NDK=$PWD/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
+
+      - name: Set up CMake 3.14.7
+        run: |
+          wget --quiet --tries=0 --output-document=cmake.tar.gz https://cmake.org/files/v3.14/cmake-3.14.7-Linux-x86_64.tar.gz
+          tar xzf cmake.tar.gz
+          echo "CMAKE_HOME=$PWD/cmake-3.14.7-Linux-x86_64" >> $GITHUB_ENV
+
+      - name: Cache takthirdparty builds
+        uses: actions/cache@v4
+        with:
+          path: atak/takthirdparty/builds
+          key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}
+
+      - name: Build native dependencies (takthirdparty)
+        working-directory: atak
+        run: |
+          export PATH="$CMAKE_HOME/bin:$PATH"
+          ./scripts/prebuild.sh
+
+      - name: Restore signing keystore
+        run: |
+          mkdir -p custom/keys
+          echo "${{ secrets.DHGM_KEYSTORE_B64 }}" | base64 -d > custom/keys/dhgm.keystore
+          cat > atak/atak/ATAK/app/local.properties <<EOF
+          sdk.dir=$ANDROID_HOME
+          cmake.dir=$CMAKE_HOME
+          takDebugKeyFile=../../../../custom/keys/dhgm.keystore
+          takDebugKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takDebugKeyAlias=dhgm-debug
+          takDebugKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takReleaseKeyFile=../../../../custom/keys/dhgm.keystore
+          takReleaseKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takReleaseKeyAlias=dhgm-release
+          takReleaseKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          EOF
+
+      - name: Assemble DHGM APK
+        working-directory: atak/atak
+        run: ./gradlew assembleCivRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DHGM-civ-release
+          path: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
