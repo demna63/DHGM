@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     container:
-      image: openjdk:8-jdk
+      image: eclipse-temurin:8-jdk  # openjdk:8-jdk ამოღებულია Docker Hub-იდან; Adoptium = JDK 8-ის მოქმედი ანალოგი
     defaults:
       run:
         shell: bash
