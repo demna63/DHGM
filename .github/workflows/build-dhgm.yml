@@ -22,7 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     container:
-      image: eclipse-temurin:8-jdk  # openjdk:8-jdk ამოღებულია Docker Hub-იდან; Adoptium = JDK 8-ის მოქმედი ანალოგი
+      # openjdk:8-jdk ამოღებულია Docker Hub-იდან. jammy = Ubuntu 22.04 (pinned):
+      # pip 22 PEP-668-ს არ აწესებს (conan==1.59.0 სუფთად ჯდება), stable apt repo.
+      image: eclipse-temurin:8-jdk-jammy
     defaults:
       run:
         shell: bash
