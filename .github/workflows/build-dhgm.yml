@@ -14,7 +14,7 @@ on:
     paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', '.github/workflows/build-dhgm.yml']
 
 env:
-  ATAK_REF: master   # ATAK-CIV-ის pinned ref — გაზარდე შეგნებულად, ტესტით
+  ATAK_REF: "4.6.0.5"   # ATAK-CIV-ის pinned stable tag (default branch = main; გაზარდე შეგნებულად, ტესტით)
 
 jobs:
   build:
