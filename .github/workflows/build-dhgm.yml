@@ -84,6 +84,8 @@ jobs:
           echo y | android-sdk-linux/tools/bin/sdkmanager "platform-tools" >/dev/null
           echo y | android-sdk-linux/tools/bin/sdkmanager "build-tools;${ANDROID_BUILD_TOOLS}" >/dev/null
           echo "ANDROID_HOME=$PWD/android-sdk-linux" >> $GITHUB_ENV
+          # host image-ის preset ANDROID_SDK_ROOT წაშლილ /usr/local/lib/android-ზე მიუთითებს
+          echo "ANDROID_SDK_ROOT=$PWD/android-sdk-linux" >> $GITHUB_ENV
           echo "$PWD/android-sdk-linux/platform-tools/" >> $GITHUB_PATH
           set +o pipefail
           yes | android-sdk-linux/tools/bin/sdkmanager --licenses
@@ -95,6 +97,9 @@ jobs:
           unzip -qq android-ndk.zip
           echo "ANDROID_NDK_HOME=$PWD/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
           echo "ANDROID_NDK=$PWD/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
+          # host image-ის preset ANDROID_NDK_ROOT წაშლილ NDK-ზე მიუთითებს —
+          # make-standalone-toolchain.sh ამაზე ეცემა ("does not point to a directory")
+          echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r${NDK_VERSION}" >> $GITHUB_ENV
 
       - name: Set up CMake 3.14.7
         run: |
@@ -114,19 +119,30 @@ jobs:
           export PATH="$CMAKE_HOME/bin:$PATH"
           ./scripts/prebuild.sh
           df -h /
+          # prebuild.sh-ს set -e არ აქვს და შეცდომებს ყლაპავს — artifact-ებს ვამოწმებთ
+          for t in arm64-v8a armeabi-v7a x86; do
+            libdir="takthirdparty/builds/android-$t-release/lib"
+            if ! ls "$libdir"/libgdal* >/dev/null 2>&1; then
+              echo "::error::takthirdparty artifacts missing for $t ($libdir/libgdal*)"
+              exit 1
+            fi
+          done
+          echo "✓ takthirdparty artifacts არსებობს სამივე არქიტექტურაზე"
 
       - name: Restore signing keystore
         run: |
           mkdir -p custom/keys
           echo "${{ secrets.DHGM_KEYSTORE_B64 }}" | base64 -d > custom/keys/dhgm.keystore
-          cat > atak/atak/ATAK/app/local.properties <<EOF
+          # build.gradle კითხულობს rootProject.file('local.properties')-ს →
+          # ფაილი gradle root-შია (atak/atak/), გზები აბსოლუტური (file() app-dir-relative-ია)
+          cat > atak/atak/local.properties <<EOF
           sdk.dir=$ANDROID_HOME
           cmake.dir=$CMAKE_HOME
-          takDebugKeyFile=../../../../custom/keys/dhgm.keystore
+          takDebugKeyFile=$GITHUB_WORKSPACE/custom/keys/dhgm.keystore
           takDebugKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
           takDebugKeyAlias=dhgm-debug
           takDebugKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
-          takReleaseKeyFile=../../../../custom/keys/dhgm.keystore
+          takReleaseKeyFile=$GITHUB_WORKSPACE/custom/keys/dhgm.keystore
           takReleaseKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
           takReleaseKeyAlias=dhgm-release
           takReleaseKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
