@@ -137,6 +137,7 @@ jobs:
           # ფაილი gradle root-შია (atak/atak/), გზები აბსოლუტური (file() app-dir-relative-ია)
           cat > atak/atak/local.properties <<EOF
           sdk.dir=$ANDROID_HOME
+          ndk.dir=$ANDROID_NDK_HOME
           cmake.dir=$CMAKE_HOME
           takDebugKeyFile=$GITHUB_WORKSPACE/custom/keys/dhgm.keystore
           takDebugKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
