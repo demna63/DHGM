@@ -213,8 +213,12 @@ jobs:
           cp atak/atak/ATAK/app/build/libs/main.jar "$SDK/" 2>/dev/null || echo "::warning::main.jar ვერ მოიძებნა"
           APK=$(find atak/atak/ATAK/app/build/outputs/apk/civ/sdk -name "*.apk" | head -1)
           cp "$APK" "$SDK/atak.apk" 2>/dev/null || echo "::warning::atak.apk ვერ მოიძებნა"
-          # atak-gradle-takdev.jar — plugin build.gradle-ს სჭირდება
-          find atak -name "atak-gradle-takdev*.jar" -exec cp {} atak/atak-gradle-takdev.jar \; 2>/dev/null || true
+          # atak-gradle-takdev.jar — წყაროა atak repo-ში, ვაშენებთ jar-ს
+          if [ -f atak/atak-gradle-takdev/gradlew ]; then
+            (cd atak/atak-gradle-takdev && chmod +x gradlew && ./gradlew jar --offline 2>/dev/null || ./gradlew jar)
+            find atak/atak-gradle-takdev -name "*.jar" -path "*build/libs*" -exec cp {} atak/atak-gradle-takdev.jar \; 2>/dev/null || echo "::warning::takdev jar build ვერ მოხერხდა"
+          fi
+          ls -la atak/atak-gradle-takdev.jar 2>/dev/null || echo "::warning::atak-gradle-takdev.jar არ არსებობს"
           # gradle wrapper (atak-იდან) + local.properties (signing + sdk.path)
           cp -r atak/atak/gradle plugin/dhgm-drones/ 2>/dev/null || true
           cp atak/atak/gradlew plugin/dhgm-drones/ 2>/dev/null || true
