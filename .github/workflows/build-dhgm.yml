@@ -136,6 +136,15 @@ jobs:
         working-directory: atak
         run: |
           export PATH="$CMAKE_HOME/bin:$PATH"
+          # cache-hit → ძვირი make (GDAL/spatialite/assimp, ~50წთ) გამოტოვება:
+          # prebuild.sh-ში, tarball extraction-ის შემდეგ და make-ს წინ, ვამატებთ touch-ს
+          # რომ არსებული native artifacts წყაროზე ახალი გახდეს (make timestamp-based).
+          if ls takthirdparty/builds/android-arm64-v8a-release/lib/libgdal* >/dev/null 2>&1; then
+            echo "cache hit — native artifacts touch, heavy make გამოტოვდება"
+            sed -i '/# Make the third party parts in parallel/i find ../takthirdparty/builds -print0 2>/dev/null | xargs -0 touch 2>/dev/null || true' scripts/prebuild.sh
+          else
+            echo "cache miss — სრული native build"
+          fi
           ./scripts/prebuild.sh
           df -h /
           # prebuild.sh-ს set -e არ აქვს და შეცდომებს ყლაპავს — artifact-ებს ვამოწმებთ
