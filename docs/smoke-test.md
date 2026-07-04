@@ -18,6 +18,25 @@
 | 1.3 | Package / applicationId | `ge.dronehub.dhgm` (`adb shell pm list packages \| grep dronehub`) |
 | 1.4 | DEV watermark | არ ჩანს „DEVELOPER BUILD" |
 
+## 1b. პირველი გაშვება — EULA და Encryption (მნიშვნელოვანი)
+
+ATAK-CIV პირველ გაშვებაზე ორ დიალოგს აჩვენებს. **არ დააჭირო „გაუქმება“ encryption-ზე ცარიელი passphrase-ით** — ძველი build splash-ზე ჭედავდა (გასწორებულია `cursor/fix-startup-stuck`).
+
+| ნაბიჯი | რა ჩანს | რა გააკეთო |
+|--------|---------|-------------|
+| A | **EULA Acceptance** | დააჭირე **„I agree“** |
+| B | **File System Access Changes** — encryption passphrase | შეიყვანე ნებისმიერი passphrase (მაგ. `dhgm123`) და **OK**, *ან* **გაუქმება** (DHGM build-ში გაიხსნება უშიფრავად) |
+| C | TAK splash (1–3 წმ) | ელოდები რუკის ჩატვირთვას |
+
+**თუ უკვე გაიჭედა splash-ზე (ძველი APK):**
+```bash
+adb shell am force-stop ge.dronehub.dhgm
+adb uninstall ge.dronehub.dhgm
+adb shell rm -rf /sdcard/atak /sdcard/Android/data/ge.dronehub.dhgm
+adb install -r DHGM-0.1.0-civ-sdk.apk
+```
+შემდეგ გაიმეორე A→B→C.
+
 ## 2. გაშვება და Permissions (Android 11+)
 
 | # | შემოწმება | მოსალოდნელი |

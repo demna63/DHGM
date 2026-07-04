@@ -55,8 +55,10 @@ public class Permissions {
         // მათი მოთხოვნა მარყუჟს ქმნის. DHGM აქ საერთოდ არ ბლოკავს გაშვებას; რუკის
         // ფაილებზე სრული წვდომა (All files access) ნებაყოფლობითია და მოგვიანებით,
         // არა-მბლოკავად ეთხოვება მომხმარებელს (იხ. maybePromptAllFilesAccess).
+        // Android 11+: არ ვაჩვენებთ All-files-access დიალოგს გაშვებისას —
+        // upstream encryption/EULA დიალოგებთან ერთად ეკრანს ფარავდა და splash-ზე ჭედავდა.
+        // სრული წვდომა: პარამეტრები → აპის სისტემის პარამეტრები (იხ. smoke-test.md).
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            maybePromptAllFilesAccess(a);
             Log.d(TAG, "DHGM: startup not gated on Android 11+ "
                     + "(storage/camera/mic/location all optional)");
             return true;
@@ -73,44 +75,6 @@ public class Permissions {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Android 11+: "All files access"-ს ვთხოვთ ერთხელ, მაგრამ უარი გაშვებას არ ბლოკავს —
-     * მომხმარებელი შედის აპში ისედაც. (upstream აქ finish()-ით ხურავდა აპს.)
-     */
-    @TargetApi(30)
-    private static void maybePromptAllFilesAccess(final Activity a) {
-        try {
-            if (Environment.isExternalStorageManager())
-                return;
-            final AlertDialog.Builder builder = new AlertDialog.Builder(a);
-            builder.setTitle(R.string.file_system_access_changes);
-            builder.setMessage(
-                    "DHGM-ს რუკებისა და მონაცემთა პაკეტების სრული გამოყენებისთვის "
-                            + "„All files access“ სჭირდება. შეგიძლიათ ახლავე ჩართოთ "
-                            + "ან მოგვიანებით, პარამეტრებიდან. აპი ორივე შემთხვევაში გაიხსნება.");
-            builder.setCancelable(true);
-            builder.setPositiveButton(R.string.i_understand,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            try {
-                                final Uri uri = Uri.parse(
-                                        "package:" + BuildConfig.APPLICATION_ID);
-                                a.startActivity(new Intent(
-                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                                        uri));
-                            } catch (Exception e) {
-                                Log.w(TAG, "All files access settings not available", e);
-                            }
-                        }
-                    });
-            builder.setNegativeButton(R.string.cancel, null);
-            builder.show();
-        } catch (Exception e) {
-            Log.w(TAG, "maybePromptAllFilesAccess failed (non-fatal)", e);
-        }
     }
 
     @TargetApi(30)
