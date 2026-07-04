@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#1E2530"
+    android:background="@color/dhgm_bg_elevated"
     android:orientation="vertical"
     android:padding="12dp"
     android:layout_marginBottom="8dp">
@@ -18,14 +18,14 @@
             android:layout_width="10dp"
             android:layout_height="10dp"
             android:layout_marginEnd="8dp"
-            android:background="#30D158" />
+            android:background="@color/dhgm_accent_green" />
 
         <TextView
             android:id="@+id/dhgm_card_callsign"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/dhgm_text_primary"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -33,7 +33,7 @@
             android:id="@+id/dhgm_card_battery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#30D158"
+            android:textColor="@color/dhgm_accent_green"
             android:textSize="15sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -43,7 +43,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:textColor="#D0D8E4"
+        android:textColor="@color/dhgm_text_primary"
         android:textSize="14sp" />
 
     <TextView
@@ -51,6 +51,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:textColor="#9AA6B8"
+        android:textColor="@color/dhgm_text_secondary"
         android:textSize="12sp" />
 </LinearLayout>

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""DHGM launcher icon-ების გენერაცია brand SVG-დან → drawable-*dpi overlay.
-
-ATAK upstream იყენებს drawable-{ldpi,mdpi,hdpi,xhdpi}/ic_atak_launcher.png.
-xxhdpi/xxxhdpi დამატებითია თანამედროვე მოწყობილობებისთვის.
+"""DHGM brand assets: launcher icons + splash screens → overlay drawable-*dpi.
 
     python3 tools/gen-icons.py
+
+საჭიროა: pip install cairosvg pillow
 """
 from __future__ import annotations
 
@@ -15,11 +14,13 @@ import cairosvg
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SVG = ROOT / "custom/brand/dhgm-logo.svg"
+LOGO_SVG = ROOT / "custom/brand/dhgm-logo.svg"
+SPLASH_SVG = ROOT / "custom/brand/dhgm-splash.svg"
+SPLASH_PORTRAIT_SVG = ROOT / "custom/brand/dhgm-splash-portrait.svg"
 OUT = ROOT / "custom/overlay/atak/ATAK/app/src/main/res"
 
 # Android density → launcher icon px (legacy drawable sizes)
-DENSITIES = {
+ICON_DENSITIES = {
     "ldpi": 36,
     "mdpi": 48,
     "hdpi": 72,
@@ -28,34 +29,76 @@ DENSITIES = {
     "xxxhdpi": 192,
 }
 
-NAMES = ("ic_atak_launcher.png", "ic_mil_atak_launcher.png")
+# Splash landscape (width x height) — centerCrop-ზე ოპტიმიზებული
+SPLASH_LANDSCAPE = {
+    "ldpi": (800, 480),
+    "mdpi": (1024, 600),
+    "hdpi": (1280, 720),
+    "xhdpi": (1920, 1080),
+    "xxhdpi": (2560, 1440),
+    "xxxhdpi": (3840, 2160),
+}
+
+ICON_NAMES = ("ic_atak_launcher.png", "ic_mil_atak_launcher.png")
+SPLASH_NAMES = ("atak_splash.png",)
+SPLASH_PORTRAIT_NAMES = ("atak_splash_portrait.png",)
+
+
+def _png_bytes(svg: Path, width: int, height: int) -> bytes:
+    return cairosvg.svg2png(url=str(svg), output_width=width, output_height=height)
+
+
+def _write_png(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img = Image.open(io.BytesIO(data))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    path.write_bytes(buf.getvalue())
+
+
+def gen_launcher_icons() -> None:
+    if not LOGO_SVG.is_file():
+        raise FileNotFoundError(LOGO_SVG)
+    for density, size in ICON_DENSITIES.items():
+        data = _png_bytes(LOGO_SVG, size, size)
+        outdir = OUT / f"drawable-{density}"
+        for name in ICON_NAMES:
+            _write_png(outdir / name, data)
+            print(f"  + {outdir.name}/{name} ({size}px)")
+
+
+def gen_splash() -> None:
+    if not SPLASH_SVG.is_file():
+        raise FileNotFoundError(SPLASH_SVG)
+    if not SPLASH_PORTRAIT_SVG.is_file():
+        raise FileNotFoundError(SPLASH_PORTRAIT_SVG)
+    for density, (w, h) in SPLASH_LANDSCAPE.items():
+        data = _png_bytes(SPLASH_SVG, w, h)
+        outdir = OUT / f"drawable-{density}"
+        for name in SPLASH_NAMES:
+            _write_png(outdir / name, data)
+            print(f"  + {outdir.name}/{name} ({w}x{h})")
+        pw, ph = h, w
+        pdata = _png_bytes(SPLASH_PORTRAIT_SVG, pw, ph)
+        for name in SPLASH_PORTRAIT_NAMES:
+            _write_png(outdir / name, pdata)
+            print(f"  + {outdir.name}/{name} ({pw}x{ph}, portrait SVG)")
+
+
+def gen_brand512() -> None:
+    brand512 = ROOT / "custom/brand/dhgm-logo-512.png"
+    cairosvg.svg2png(url=str(LOGO_SVG), write_to=str(brand512), output_width=512, output_height=512)
+    print(f"  + {brand512.relative_to(ROOT)}")
 
 
 def main() -> int:
-    if not SVG.is_file():
-        print(f"✗ SVG არ არის: {SVG}")
-        return 1
-
-    for density, size in DENSITIES.items():
-        png_bytes = cairosvg.svg2png(url=str(SVG), output_width=size, output_height=size)
-        # ოპტიმიზაცია PNG-ად (cairosvg უკვე PNG-ს აბრუნებს; PIL ვალიდაცია)
-        img = Image.open(io.BytesIO(png_bytes))
-        outdir = OUT / f"drawable-{density}"
-        outdir.mkdir(parents=True, exist_ok=True)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG", optimize=True)
-        data = buf.getvalue()
-        for name in NAMES:
-            path = outdir / name
-            path.write_bytes(data)
-            print(f"  + {path.relative_to(ROOT)} ({size}px)")
-
-    # brand/ 512px — Play Store / about screen
-    brand512 = ROOT / "custom/brand/dhgm-logo-512.png"
-    cairosvg.svg2png(url=str(SVG), write_to=str(brand512), output_width=512, output_height=512)
-    print(f"  + {brand512.relative_to(ROOT)}")
-
-    print("✓ icon-ები გენერირებულია")
+    print("== launcher icons ==")
+    gen_launcher_icons()
+    print("== splash screens ==")
+    gen_splash()
+    print("== brand 512 ==")
+    gen_brand512()
+    print("✓ brand assets გენერირებულია")
     return 0
 
 

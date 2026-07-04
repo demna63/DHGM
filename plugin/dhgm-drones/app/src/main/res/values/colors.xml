@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dhgm_bg_surface">#151A23</color>
+    <color name="dhgm_bg_elevated">#1E2530</color>
+    <color name="dhgm_accent_teal">#17A79A</color>
+    <color name="dhgm_accent_green">#30D158</color>
+    <color name="dhgm_telemetry">#64D2FF</color>
+    <color name="dhgm_text_primary">#D0D8E4</color>
+    <color name="dhgm_text_secondary">#9AA6B8</color>
+    <color name="dhgm_warning">#FF453A</color>
+</resources>

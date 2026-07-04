@@ -365,4 +365,64 @@
     <string name="failed_to_export_logs">ლოგების ექსპორტი ვერ მოხერხდა</string>
     <string name="vehicle_model">ტრანსპორტის მოდელი</string>
     <string name="aircraft_title">საფრინავი:</string>
+
+    <!-- ბლოკი 8: პირველი გაშვება — EULA, encryption, ფაილების წვდომა -->
+    <string name="preferences_text422a">სასამართლო ლიცენზიის შეთანხმება</string>
+    <string name="preferences_text423">სასამართლო ლიცენზიის შეთანხმების (EULA) სანახავად დააჭირეთ ქვემოთ მოცემულ ღილაკს.</string>
+    <string name="preferences_text424">„ვეთანხმები" ღილაკზე დაჭერით ეთანხმებით EULA-ის პირობებს.</string>
+    <string name="preferences_text425">ვეთანხმები.</string>
+    <string name="preferences_text426">ვუარყოფ.</string>
+    <string name="preferences_text415">EULA-ის ნახვა</string>
+    <string name="create_encryption_passphrase">აირჩიეთ ახალი დაშიფვრის პაროლი თქვენი მონაცემებისთვის.</string>
+    <string name="encryption_passphrase_prompt">შეიყვანეთ დაშიფვრის პაროლი, რომელიც მონაცემების დაშიფვრისას მიუთითეთ.</string>
+    <string name="encryption_passphrase_title">დაშიფვრის პაროლი</string>
+    <string name="file_system_access_changes">ფაილური სისტემის წვდომის ცვლილებები</string>
+    <string name="i_understand">გასაგებია</string>
+    <string name="required_missing_permissions">აუცილებელი ნებართვები აკლია</string>
+    <string name="use_your_location_title">თქვენი მდებარეობის გამოყენება</string>
+    <string name="android_11_warning">Android 11+ გაფრთხილება</string>
+    <string name="invalid_passphrase">არასწორი პაროლი</string>
+    <string name="invalid_passphrase_tick">პაროლი არ შეიძლება შეიცავდეს \' სიმბოლოს</string>
+    <string name="encrypted_removal">დაშიფრული მონაცემების წაშლა</string>
+    <string name="encrypted_removal_message">დაშიფრული მონაცემთა ბაზები წაიშლება. გავაგრძელოთ?</string>
+    <string name="remove_and_quit">წაშლა და გასვლა</string>
+    <string name="preferences_text410">სისტემა ჯერ იტვირთება. სცადეთ მოგვიანებით.</string>
+    <string name="preferences_text417">გთხოვთ დაელოდოთ…</string>
+
+    <!-- ბლოკი 9: რუკა, შრეები, იმპორტი, zoom -->
+    <string name="zeroize_sub_text">რუკებისა და გამოსახულებების გასუფთავება</string>
+    <string name="preferences_text42">მოძველებული მარკერების ყველა ტიპის რუკიდან ამოღება</string>
+    <string name="preferences_text52">რუკის ხანგრძლივი დაჭერის მოქმედება</string>
+    <string name="preferences_text53">განსაზღვრავს, რა მოხდება რუკის ხანგრძლივი დაჭერისას.</string>
+    <string name="preferences_text56">ორმაგი შეხება — 2X მიახლოება</string>
+    <string name="preferences_text57">ჩართულის შემთხვევაში, რუკის ორმაგი შეხება (გადათრევის გარეშე) 2X-ით ახლოებს.</string>
+    <string name="preferences_text58">ხმის ღილაკებით რუკის შრეების გადართვა</string>
+    <string name="preferences_text59">ჩართულის შემთხვევაში, ხმის ღილაკები რუკებს გადართავს. წინააღმდეგ შემთხვევაში — ხმის ნაგულისხმევი ქცევა.</string>
+    <string name="preferences_text67">გამორთეთ, თუ რუკის დაშორებისას აპი იშლება.</string>
+    <string name="preferences_text133">რუკის მასშტაბის ჩვენება</string>
+    <string name="preferences_text134">რუკაზე ვიზუალური მასშტაბის ჩართვა.</string>
+    <string name="preferences_text135">რუკის მასშტაბის დამრგვალება</string>
+    <string name="preferences_text144">რუკაზე ელემენტების ეტიკეტების ნაგულისხმევი ზომა. სრულად ასახვისთვის საჭიროა გადატვირთვა.</string>
+    <string name="preferences_text145">რუკის ყველა ელემენტი ბრილიანსის ხელსაწყოთან ერთად ბნელდება/სუნთქავს.</string>
+    <string name="preferences_text146">რუკის შრეების ბნელდება/სუნთქვა</string>
+    <string name="preferences_text149">შრის კონტურის ქცევისა და გარეგნობის მართვა.</string>
+    <string name="preferences_text152">შრეების მმართველის სიგანე/სიმაღლე</string>
+    <string name="preferences_text153">შრეების მმართველის ფანჯრის ზომის შეცვლა</string>
+    <string name="preferences_text170">გამოსახულების ჩანართის სახელი</string>
+    <string name="preferences_text171">აირჩიეთ გამოსახულება ან რუკები.</string>
+    <string name="preferences_text174">სიმაღლის სიცხარე რუკის პროცენტი (HSV, 0—100)</string>
+    <string name="preferences_text211">შრის მონაცემების სრული გადატვირთვა და ხელახალი სკანირება.</string>
+    <string name="preferences_text212">შრის ქეშის იძულებითი გადატვირთვა</string>
+    <string name="preferences_text229">კავშირის ინდიკატორის ჩვენება რუკაზე, ლოკალური მდებარეობის ვიჯეტის ზემოთ.</string>
+    <string name="preferences_text272">ღამის ხედვის რუკის ვიჯეტის ჩვენება</string>
+    <string name="preferences_text318">სიმაღლის პროფილის ინტერპოლაცია</string>
+    <string name="preferences_text319">ჩართეთ მარშრუტის ახლომდებარე წერტილებიდან სიმაღლის ინტერპოლაცია. გამორთულის შემთხვევაში — DTED.</string>
+    <string name="preferences_text320">სიმაღლის პროფილი — ცენტრი სიკვრევზე</string>
+    <string name="preferences_text324">სიმაღლის მონაცემების იგნორირება</string>
+    <string name="preferences_text325">ჩართულის შემთხვევაში, ექსპორტირებულ მარშრუტში სიმაღლე არ ჩაიწერება. გამორთულის შემთხვევაში — ფაილში ჩაიწერება არსებული სიმაღლე.</string>
+    <string name="preferences_text4372">ფაილების იმპორტი</string>
+    <string name="default_crumb_size_summ">ბურთულების ნაგულისხმევი ზომა რუკაზე.</string>
+    <string name="route_zoom_in_prompt">კვეთილების რედაქტირებისთვის მიახლოებით.</string>
+    <string name="show_by_default_layers">გაშვებისას შრის კონტურების ჩვენება</string>
+    <string name="about_screen_make_model">მოწყობილობა: %1$s Android: %2$d</string>
 </resources>

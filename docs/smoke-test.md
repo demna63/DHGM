@@ -14,9 +14,20 @@
 | # | შემოწმება | მოსალოდნელი |
 |---|-----------|-------------|
 | 1.1 | Launcher ხატულა | DHGM navy + D + teal (არა ATAK) |
+| 1.1b | Splash (გაშვება) | **DHGM** ლოგო + navy ფონი (landscape და portrait) |
 | 1.2 | აპის სახელი | **DHGM** |
 | 1.3 | Package / applicationId | `ge.dronehub.dhgm` (`adb shell pm list packages \| grep dronehub`) |
 | 1.4 | DEV watermark | არ ჩანს „DEVELOPER BUILD" |
+
+## 1b. პირველი გაშვება — EULA
+
+ახალი build-ზე encryption passphrase **ავტომატურია** (დიალოგი აღარ ჩანს).
+
+| ნაბიჯი | რა ჩანს | რა გააკეთო |
+|--------|---------|-------------|
+| A | EULA (ქართული სათაური/ღილაკები) | **„ვეთანხმები."** |
+| B | DHGM splash (1–3 წმ) | navy + DHGM ლოგო (არა TAK shield) |
+| C | რუკა | ჩაიტვირთოს ბაზისური ფონი |
 
 ## 2. გაშვება და Permissions (Android 11+)
 
@@ -35,7 +46,8 @@
 | 3.2 | Overflow → გასვლა | „გასვლა" |
 | 3.3 | Toolbar ხელსაწყო (routes) | „მარშრუტები" |
 | 3.4 | პარამეტრები → ქსელი | „ქსელის პარამეტრები" |
-| 3.5 | About | „DHGM-ის შესახებ" |
+| 3.5 | About | „DHGM-ის შესახებ" + **DHGM ლოგო** (არა TAK) |
+| 3.6 | EULA ღილაკები | „ვეთანხმები." / „ვუარყოფ." |
 
 ## 4. ვიზუალი (DroneHub პალიტრა)
 
@@ -72,7 +84,7 @@ Plugin UI ჯერ skeleton-ია — ATAK-ში პანელი ფაზ
 
 - [ ] Crash გაშვებისას
 - [ ] უსასრულო permission loop
-- [ ] ATAK branding (სახელი/ხატულა)
+- [ ] ATAK/TAK splash shield
 - [ ] `com.atakmap.app.civ` package
 
 ## შედეგის ჩანაწერი
