@@ -3,7 +3,6 @@ package ge.dronehub.dhgm.plugin;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;
-import android.widget.TextView;
 
 import com.atak.plugins.impl.PluginLayoutInflater;
 import com.atakmap.android.dropdown.DropDown;
@@ -12,7 +11,8 @@ import com.atakmap.android.maps.MapView;
 import com.atakmap.coremap.log.Log;
 
 /**
- * დრონების პანელი (skeleton) — bridge TCP-დან ტელემეტრიის ჩვენება მომავალ ეტაპზე.
+ * დრონების პანელი — bridge TCP-ს (127.0.0.1:14550) უსმენს და ცოცხალ
+ * ტელემეტრიას ბარათებად ხატავს {@link DronePanel}-ის მეშვეობით.
  */
 public class DhgmDronesDropDownReceiver extends DropDownReceiver
         implements DropDown.OnStateListener {
@@ -22,24 +22,15 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
     public static final String SHOW_DRONES =
             "ge.dronehub.dhgm.plugin.SHOW_DRONES";
 
-    private final Context pluginContext;
     private final View panelView;
-    private final TextView statusView;
-    private BridgeTcpClient bridgeClient;
+    private final DronePanel panel;
+    private final BridgeTcpClient bridgeClient;
 
     public DhgmDronesDropDownReceiver(final MapView mapView, final Context context) {
         super(mapView);
-        this.pluginContext = context;
         panelView = PluginLayoutInflater.inflate(context, R.layout.drone_panel, null);
-        statusView = panelView.findViewById(R.id.dhgm_bridge_status);
-        bridgeClient = new BridgeTcpClient("127.0.0.1", 14550, this::onBridgeLine);
-    }
-
-    private void onBridgeLine(String line) {
-        if (statusView != null) {
-            statusView.post(() -> statusView.setText(
-                    pluginContext.getString(R.string.dhgm_bridge_line, line)));
-        }
+        panel = new DronePanel(context, panelView);
+        bridgeClient = new BridgeTcpClient("127.0.0.1", 14550, panel::onBridgeLine);
     }
 
     @Override
@@ -49,6 +40,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
         }
         if (SHOW_DRONES.equals(intent.getAction())) {
             Log.d(TAG, "opening drone panel");
+            panel.setConnected(true);
             bridgeClient.connect();
             showDropDown(panelView, HALF_WIDTH, FULL_HEIGHT, FULL_WIDTH,
                     HALF_HEIGHT, false, this);
@@ -62,6 +54,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
     @Override
     public void onDropDownClose() {
         bridgeClient.disconnect();
+        panel.setConnected(false);
     }
 
     @Override

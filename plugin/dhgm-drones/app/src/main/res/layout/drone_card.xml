@@ -4,22 +4,53 @@
     android:layout_height="wrap_content"
     android:background="#1E2530"
     android:orientation="vertical"
-    android:padding="10dp"
+    android:padding="12dp"
     android:layout_marginBottom="8dp">
 
-    <TextView
-        android:id="@+id/dhgm_card_callsign"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#D0D8E4"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <View
+            android:id="@+id/dhgm_card_status_dot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginEnd="8dp"
+            android:background="#30D158" />
+
+        <TextView
+            android:id="@+id/dhgm_card_callsign"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/dhgm_card_battery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#30D158"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/dhgm_card_metrics"
+        android:id="@+id/dhgm_card_altspeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#D0D8E4"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/dhgm_card_modegps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:textColor="#9AA6B8"
-        android:textSize="13sp" />
+        android:textSize="12sp" />
 </LinearLayout>
