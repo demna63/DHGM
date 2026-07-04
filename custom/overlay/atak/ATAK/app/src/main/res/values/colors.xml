@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DHGM overlay: ფერთა პალიტრა DroneHub-ის ბრენდზე (GCS-ის იდენტური).
+     ყველა upstream name უცვლელია — მხოლოდ hex იცვლება (military maize/beige → navy/ცისფერი).
+     GCS პალიტრა: brandPrimary #0A84FF, accent #30D158, telemetry #64D2FF,
+     bgBase #0B0E14, bgSurface #151A23, bgElevated #1E2530, text #FFFFFF/#D0D8E4. -->
+<resources>
+    <color name="red">#ffff0000</color>
+    <color name="color_group">#30808080</color>
+    <color name="color_child1">#30ffffff</color>
+    <color name="color_child2">#30ffffff</color>
+    <color name="color_child_missing">#4FFF3333</color>
+
+    <!-- COMMON -->
+    <color name="white">#ffffff</color>
+    <color name="light_gray">#cccccc</color>
+    <color name="lighter_gray">#555555</color>
+    <color name="gray">#585858</color>
+    <color name="dark_gray">#151A23</color>
+    <color name="darker_gray">#0B0E14</color>
+    <color name="green">#30D158</color>
+    <color name="black_overlay">#ff151A23</color>
+    <color name="black_overlay_transparent">#C0151A23</color>
+
+    <color name="heading_yellow">#64D2FF</color>
+
+
+    <!-- LED -->
+    <color name="led_green">#30D158</color>
+    <color name="led_red">#FF453A</color>
+
+    <!-- PRESET -->
+
+    <color name="actionbar_background">#B30B0E14</color>
+    <color name="actionbar_background_empty">#440B0E14</color>
+    <color name="light_blue">#64D2FF</color>
+
+    <color name="th_green">#ff30D158</color>
+
+    <!-- DHGM DESIGN (DroneHub palette) -->
+    <color name="black">#000000</color>
+    <color name="pastel_gray">#D0D8E4</color>
+    <color name="pale_silver">#D0D8E4</color>
+    <color name="ash_gray">#9AA6B8</color>
+    <color name="atac_beige">#D0D8E4</color>
+    <color name="onyx">#151A23</color>
+    <color name="onyx_85">#d8151A23</color>
+    <color name="maize">#0A84FF</color>
+    <color name="taupe">#1E2530</color>
+    <color name="taupe_gray">#9AA6B8</color>
+    <color name="sand">#64D2FF</color>
+    <color name="deep_carmine_pink">#FF453A</color>
+    <color name="icterine">#64D2FF</color>
+    <color name="mint_green">#30D158</color>
+    <color name="ufo_green">#30D158</color>
+    <color name="light_salmon_pink">#FF9F9D</color>
+    <color name="manatee">#2A323F</color>
+    <color name="medium_jungle_green">#1E2530</color>
+    <color name="trolley_grey">#818181</color>
+    <color name="hansa_yellow">#64D2FF</color>
+
+    <color name="toolbar_tint">#151A23</color>
+    <color name="hilight_yellow">@color/hansa_yellow</color>
+    <color name="listview_divider">@color/manatee</color>
+    <color name="listview_background">#151A23</color>
+
+    <color name="button_pressed">@color/taupe</color>
+    <color name="alert">@color/deep_carmine_pink</color>
+    <color name="map_text">@color/icterine</color>
+    <color name="tooltip_text">@color/hansa_yellow</color>
+    <color name="callsign_default">@color/mint_green</color>
+    <color name="callsign_alert">@color/light_salmon_pink</color>
+    <color name="black_tooltip_overlay">#a6000000</color>
+    <color name="text_shadow">#7F000000</color>
+    <color name="bloodhound_info_widget_text_color">#b3ffbe</color>
+    <color name="seekbar_background">#80000000</color>
+</resources>

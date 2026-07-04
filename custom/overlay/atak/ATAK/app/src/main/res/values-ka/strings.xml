@@ -127,4 +127,17 @@
     <string name="unitDisplayPreferences">ერთეულების ფორმატის პარამეტრები</string>
     <string name="toolPreferences">ხელსაწყოების პარამეტრები</string>
     <string name="myPreferences">ჩემი პარამეტრები</string>
+
+    <!-- ბლოკი 3: მთავარი მენიუს ხელსაწყოების სახელები (actionbar_*) -->
+    <string name="alert">განგაში</string>
+    <string name="clear_content">შიგთავსის გასუფთავება</string>
+    <string name="elevation">სიმაღლე</string>
+    <string name="actionbar_brightness">სიკაშკაშე</string>
+    <string name="actionbar_casevac">CASEVAC</string>
+    <string name="actionbar_contacts">კონტაქტები</string>
+    <string name="actionbar_missionpackage">მონაცემთა პაკეტები</string>
+    <string name="mission_package_name_plural">მონაცემთა პაკეტები</string>
+    <string name="actionbar_firetools">ციფრული მაჩვენებელი</string>
+    <string name="actionbar_bloodhoundtool">Bloodhound</string>
+    <string name="bloodhound_title">Bloodhound</string>
 </resources>

@@ -22,4 +22,16 @@ else
   echo "  ⚠ app_name-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე ხელით: $STRINGS"
 fi
 
+echo "== 3/3: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
+GRADLE=atak/atak/ATAK/app/build.gradle
+if grep -q "'\"DEVELOPER BUILD\"'" "$GRADLE"; then
+  sed -i '' "s|'\"DEVELOPER BUILD\"'|'\"\"'|" "$GRADLE" 2>/dev/null \
+    || sed -i "s|'\"DEVELOPER BUILD\"'|'\"\"'|" "$GRADLE"
+  echo "  ✓ DEV_BANNER → ცარიელი (watermark მოიხსნა)"
+elif grep -q "DEV_BANNER', '\"\"'" "$GRADLE"; then
+  echo "  ✓ DEV_BANNER უკვე ცარიელია"
+else
+  echo "  ⚠ DEV_BANNER-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე: $GRADLE"
+fi
+
 echo "✓ overlay დადებულია"
