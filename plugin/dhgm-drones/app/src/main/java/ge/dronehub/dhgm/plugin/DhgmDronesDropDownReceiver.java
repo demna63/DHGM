@@ -42,7 +42,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
         this.pluginContext = context;
         this.prefs = PreferenceManager.getDefaultSharedPreferences(mapView.getContext());
         panelView = PluginLayoutInflater.inflate(context, R.layout.drone_panel, null);
-        panel = new DronePanel(context, panelView);
+        panel = new DronePanel(context, panelView, mapView);
 
         hostInput = panelView.findViewById(R.id.dhgm_host_input);
         hostInput.setText(prefs.getString(PREF_HOST, DEFAULT_HOST));

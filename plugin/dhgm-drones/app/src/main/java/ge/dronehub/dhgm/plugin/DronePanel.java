@@ -1,12 +1,16 @@
 package ge.dronehub.dhgm.plugin;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.atak.plugins.impl.PluginLayoutInflater;
+import com.atakmap.android.maps.MapView;
 import com.atakmap.coremap.log.Log;
+import com.atakmap.coremap.maps.coords.GeoPoint;
 
 import org.json.JSONObject;
 
@@ -16,6 +20,8 @@ import java.util.Map;
 /**
  * დრონების პანელის კონტროლერი — bridge-ის JSON ხაზებს აპარსავს და თითო დრონზე
  * ცოცხალ ბარათს ხატავს (callsign, სიმაღლე, სიჩქარე, ბატარეა, რეჟიმი, GPS).
+ * ბარათზე tap → რუკაზე ცენტრირება + follow toggle. Follow → რუკა დრონს მიჰყვება.
+ * stale დრონი ნაცრისფრდება (ticker-ით, ტელემეტრიის გარეშეც).
  * ყველა UI-ცვლილება panel view-ის thread-ზე (post) ხდება.
  */
 public class DronePanel {
@@ -27,20 +33,42 @@ public class DronePanel {
     private static final int C_WARN = 0xFFFF9F0A;     // ნარინჯისფერი
     private static final int C_CRIT = 0xFFFF453A;     // წითელი
     private static final int C_MUTED = 0xFF9AA6B8;    // ნაცრისფერი (stale/უცნობი)
+    private static final int C_CARD = 0xFF1E2530;     // ბარათის ფონი
+    private static final int C_CARD_FOLLOW = 0xFF17A79A; // follow-ის აქცენტი (teal)
+
+    private static final long STALE_TICK_MS = 2000L;
 
     private final Context pluginContext;
     private final View panelView;
+    private final MapView mapView;
     private final TextView statusView;
     private final LinearLayout listView;
     private final TextView emptyView;
+    private final Handler ui = new Handler(Looper.getMainLooper());
 
     // sysid → (telemetry, card view) — LinkedHashMap რომ რიგი შენარჩუნდეს
     private final Map<Integer, DroneTelemetry> drones = new LinkedHashMap<>();
     private final Map<Integer, View> cards = new LinkedHashMap<>();
 
-    public DronePanel(Context pluginContext, View panelView) {
+    private int followSysid = -1;  // -1 = follow გამორთული
+    private boolean ticking = false;
+
+    private final Runnable staleTicker = new Runnable() {
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            for (Map.Entry<Integer, DroneTelemetry> e : drones.entrySet()) {
+                View card = cards.get(e.getKey());
+                if (card != null) bindCard(card, e.getValue());
+            }
+            if (ticking) ui.postDelayed(this, STALE_TICK_MS);
+        }
+    };
+
+    public DronePanel(Context pluginContext, View panelView, MapView mapView) {
         this.pluginContext = pluginContext;
         this.panelView = panelView;
+        this.mapView = mapView;
         this.statusView = panelView.findViewById(R.id.dhgm_bridge_status);
         this.listView = panelView.findViewById(R.id.dhgm_drone_list);
         this.emptyView = new TextView(pluginContext);
@@ -65,12 +93,16 @@ public class DronePanel {
     public void setConnected(final boolean connected) {
         panelView.post(() -> {
             if (!connected) {
+                stopTicker();
+                followSysid = -1;
                 drones.clear();
                 listView.removeAllViews();
                 cards.clear();
                 showEmpty(true);
                 statusView.setText(R.string.dhgm_bridge_disconnected);
                 statusView.setTextColor(C_MUTED);
+            } else {
+                startTicker();
             }
         });
     }
@@ -78,12 +110,14 @@ public class DronePanel {
     /** მყისიერი უკუკავშირი „დაკავშირება" ღილაკზე — ვუკავშირდები host:port…. */
     public void setConnecting(final String hostPort) {
         panelView.post(() -> {
+            followSysid = -1;
             drones.clear();
             listView.removeAllViews();
             cards.clear();
             showEmpty(true);
             statusView.setText(pluginContext.getString(R.string.dhgm_connecting, hostPort));
             statusView.setTextColor(C_WARN);
+            startTicker();
         });
     }
 
@@ -112,18 +146,49 @@ public class DronePanel {
         View card = cards.get(t.sysid);
         if (card == null) {
             card = PluginLayoutInflater.inflate(pluginContext, R.layout.drone_card, null);
+            final int sysid = t.sysid;
+            card.setOnClickListener(v -> onCardTap(sysid));
             cards.put(t.sysid, card);
             listView.addView(card);
             showEmpty(false);
         }
         bindCard(card, t);
+        // follow — რუკა მიჰყვება არჩეულ დრონს
+        if (t.sysid == followSysid) {
+            centerOn(t);
+        }
     }
 
     private void remove(int sysid) {
         drones.remove(sysid);
         View card = cards.remove(sysid);
         if (card != null) listView.removeView(card);
+        if (sysid == followSysid) followSysid = -1;
         if (cards.isEmpty()) showEmpty(true);
+    }
+
+    /** ბარათზე tap: რუკაზე ცენტრირება + follow toggle (მეორე tap → follow off). */
+    private void onCardTap(int sysid) {
+        DroneTelemetry t = drones.get(sysid);
+        if (t == null) return;
+        centerOn(t);
+        followSysid = (followSysid == sysid) ? -1 : sysid;
+        // ყველა ბარათის follow-ვიზუალის განახლება
+        for (Map.Entry<Integer, DroneTelemetry> e : drones.entrySet()) {
+            View card = cards.get(e.getKey());
+            if (card != null) bindCard(card, e.getValue());
+        }
+    }
+
+    /** რუკა დრონის კოორდინატზე. */
+    private void centerOn(DroneTelemetry t) {
+        try {
+            if (mapView != null) {
+                mapView.getMapController().panTo(new GeoPoint(t.lat, t.lon), true);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "panTo failed: " + e.getMessage());
+        }
     }
 
     private void bindCard(View card, DroneTelemetry t) {
@@ -133,7 +198,11 @@ public class DronePanel {
         TextView modegps = card.findViewById(R.id.dhgm_card_modegps);
         View dot = card.findViewById(R.id.dhgm_card_status_dot);
 
-        callsign.setText(t.callsign);
+        boolean followed = t.sysid == followSysid;
+        boolean stale = t.isStale(System.currentTimeMillis());
+
+        callsign.setText(followed ? "▶ " + t.callsign : t.callsign);
+        card.setBackgroundColor(followed ? C_CARD_FOLLOW : C_CARD);
 
         // ბატარეა + ფერი
         if (t.batteryPct != null) {
@@ -144,21 +213,19 @@ public class DronePanel {
             battery.setTextColor(C_MUTED);
         }
 
-        // სიმაღლე (AGL უპირატესია) · სიჩქარე · კურსი
         String alt = t.altAglM != null
                 ? String.format("%.0f m AGL", t.altAglM)
                 : (t.altMslM != null ? String.format("%.0f m MSL", t.altMslM) : "— m");
         altspeed.setText(pluginContext.getString(
                 R.string.dhgm_card_altspeed, alt, t.speedMps, t.courseDeg));
 
-        // რეჟიმი · GPS (+ სატელიტები თუ არის)
         String sats = t.satellites != null ? " (" + t.satellites + ")" : "";
         String mode = t.flightMode == null || t.flightMode.isEmpty() ? "—" : t.flightMode;
         String gps = t.gpsFix == null || t.gpsFix.isEmpty() ? "—" : t.gpsFix;
         modegps.setText(pluginContext.getString(R.string.dhgm_card_modegps, mode, gps, sats));
 
         // სტატუს-წერტილი: stale → ნაცრისფერი, თორემ მწვანე
-        dot.setBackgroundColor(t.isStale(System.currentTimeMillis()) ? C_MUTED : C_OK);
+        dot.setBackgroundColor(stale ? C_MUTED : C_OK);
     }
 
     private void refreshStatus() {
@@ -187,5 +254,17 @@ public class DronePanel {
         } else {
             if (emptyView.getParent() != null) listView.removeView(emptyView);
         }
+    }
+
+    private void startTicker() {
+        if (!ticking) {
+            ticking = true;
+            ui.postDelayed(staleTicker, STALE_TICK_MS);
+        }
+    }
+
+    private void stopTicker() {
+        ticking = false;
+        ui.removeCallbacks(staleTicker);
     }
 }

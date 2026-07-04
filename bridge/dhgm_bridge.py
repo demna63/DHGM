@@ -179,22 +179,25 @@ def mavlink_loop(conn_str: str, states: Dict[int, DroneState]) -> None:
             st.flight_mode = str(msg.custom_mode)
 
 
-def sim_step(st: DroneState, t0: float) -> None:
-    """სიმულირებული დრონი — წრე თბილისის ცენტრზე, R=500მ, 15 მ/წმ, 120მ AGL."""
+def sim_step(st: DroneState, t0: float, index: int = 0) -> None:
+    """სიმულირებული დრონი — წრე თბილისის ცენტრზე. index-ით რამდენიმე დრონი
+    სხვადასხვა რადიუსზე/ფაზაზე/სიჩქარეზე იშლება (--sim-drones N)."""
     elapsed = time.time() - t0
-    radius_m, speed = 500.0, 15.0
+    radius_m = 400.0 + index * 250.0            # თითო დრონი უფრო დიდ წრეზე
+    speed = 12.0 + index * 4.0                  # განსხვავებული სიჩქარე
+    phase = index * (2.0 * math.pi / 3.0)       # ფაზის წანაცვლება
     omega = speed / radius_m
-    ang = omega * elapsed
+    ang = omega * elapsed + phase
     st.lat = SIM_CENTER_LAT + (radius_m / 111320.0) * math.sin(ang)
     st.lon = SIM_CENTER_LON + (radius_m / (111320.0 * math.cos(math.radians(SIM_CENTER_LAT)))) * math.cos(ang)
-    st.alt_rel = 120.0
-    st.alt_msl = 120.0 + 450.0  # თბილისის სავარაუდო რელიეფი
+    st.alt_rel = 100.0 + index * 40.0
+    st.alt_msl = st.alt_rel + 450.0             # თბილისის სავარაუდო რელიეფი
     st.groundspeed = speed
     st.heading = (math.degrees(ang) + 90.0) % 360.0
-    st.battery_pct = max(0, 100 - int(elapsed / 30))
+    st.battery_pct = max(0, 100 - index * 7 - int(elapsed / 30))
     st.flight_mode = "AUTO"
     st.gps_fix = "3D"
-    st.satellites = 12
+    st.satellites = 12 - index
     st.last_seen = time.time()
 
 
@@ -210,6 +213,8 @@ def main() -> int:
     p.add_argument("--stale", type=float, default=10.0, help="CoT stale ფანჯარა წმ (default: 10)")
     p.add_argument("--prefix", default="DH", help="callsign პრეფიქსი (default: DH)")
     p.add_argument("--sim", action="store_true", help="სიმულირებული დრონი MAVLink-ის გარეშე")
+    p.add_argument("--sim-drones", type=int, default=1, metavar="N",
+                   help="სიმულირებული დრონების რაოდენობა (default: 1)")
     p.add_argument("--dry-run", action="store_true", help="CoT stdout-ზე, გაგზავნის გარეშე")
     p.add_argument("--plugin-tcp", default="", metavar="HOST:PORT",
                    help="DHGM plugin-ისთვის TCP JSON stream (მაგ. 127.0.0.1:14550)")
@@ -231,8 +236,11 @@ def main() -> int:
     prev_plugin_clients = 0
 
     if args.sim:
-        states[1] = DroneState(1)
-        print("[dhgm] SIM რეჟიმი — დრონი DH-1 წრეზე თბილისის ცენტრთან", file=sys.stderr)
+        n = max(1, args.sim_drones)
+        for i in range(1, n + 1):
+            states[i] = DroneState(i)
+        print("[dhgm] SIM რეჟიმი — %d დრონი (DH-1..DH-%d) წრეებზე თბილისის ცენტრთან"
+              % (n, n), file=sys.stderr)
     else:
         import threading
         th = threading.Thread(target=mavlink_loop, args=(args.mavlink, states), daemon=True)
@@ -248,7 +256,8 @@ def main() -> int:
         while True:
             now = time.time()
             if args.sim:
-                sim_step(states[1], t0)
+                for i, sysid in enumerate(sorted(states)):
+                    sim_step(states[sysid], t0, index=i)
             current_active: Set[int] = set()
             for st in states.values():
                 if st.has_fix and now - st.last_seen < args.stale:
