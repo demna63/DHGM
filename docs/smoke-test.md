@@ -14,7 +14,7 @@
 | # | შემოწმება | მოსალოდნელი |
 |---|-----------|-------------|
 | 1.1 | Launcher ხატულა | DHGM navy + D + teal (არა ATAK) |
-| 1.1b | Splash (გაშვება) | **DHGM** ლოგო + navy ფონი (არა TAK shield) |
+| 1.1b | Splash (გაშვება) | **DHGM** ლოგო + navy ფონი (landscape და portrait) |
 | 1.2 | აპის სახელი | **DHGM** |
 | 1.3 | Package / applicationId | `ge.dronehub.dhgm` (`adb shell pm list packages \| grep dronehub`) |
 | 1.4 | DEV watermark | არ ჩანს „DEVELOPER BUILD" |
@@ -46,7 +46,7 @@
 | 3.2 | Overflow → გასვლა | „გასვლა" |
 | 3.3 | Toolbar ხელსაწყო (routes) | „მარშრუტები" |
 | 3.4 | პარამეტრები → ქსელი | „ქსელის პარამეტრები" |
-| 3.5 | About | „DHGM-ის შესახებ" |
+| 3.5 | About | „DHGM-ის შესახებ" + **DHGM ლოგო** (არა TAK) |
 | 3.6 | EULA ღილაკები | „ვეთანხმები." / „ვუარყოფ." |
 
 ## 4. ვიზუალი (DroneHub პალიტრა)

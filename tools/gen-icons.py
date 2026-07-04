@@ -16,6 +16,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_SVG = ROOT / "custom/brand/dhgm-logo.svg"
 SPLASH_SVG = ROOT / "custom/brand/dhgm-splash.svg"
+SPLASH_PORTRAIT_SVG = ROOT / "custom/brand/dhgm-splash-portrait.svg"
 OUT = ROOT / "custom/overlay/atak/ATAK/app/src/main/res"
 
 # Android density → launcher icon px (legacy drawable sizes)
@@ -41,8 +42,6 @@ SPLASH_LANDSCAPE = {
 ICON_NAMES = ("ic_atak_launcher.png", "ic_mil_atak_launcher.png")
 SPLASH_NAMES = ("atak_splash.png",)
 SPLASH_PORTRAIT_NAMES = ("atak_splash_portrait.png",)
-
-BG = "#0B0E14"
 
 
 def _png_bytes(svg: Path, width: int, height: int) -> bytes:
@@ -71,18 +70,19 @@ def gen_launcher_icons() -> None:
 def gen_splash() -> None:
     if not SPLASH_SVG.is_file():
         raise FileNotFoundError(SPLASH_SVG)
+    if not SPLASH_PORTRAIT_SVG.is_file():
+        raise FileNotFoundError(SPLASH_PORTRAIT_SVG)
     for density, (w, h) in SPLASH_LANDSCAPE.items():
         data = _png_bytes(SPLASH_SVG, w, h)
         outdir = OUT / f"drawable-{density}"
         for name in SPLASH_NAMES:
             _write_png(outdir / name, data)
             print(f"  + {outdir.name}/{name} ({w}x{h})")
-        # portrait — იგივე SVG, ვერტიკალური ზომები
         pw, ph = h, w
-        pdata = _png_bytes(SPLASH_SVG, pw, ph)
+        pdata = _png_bytes(SPLASH_PORTRAIT_SVG, pw, ph)
         for name in SPLASH_PORTRAIT_NAMES:
             _write_png(outdir / name, pdata)
-            print(f"  + {outdir.name}/{name} ({pw}x{ph})")
+            print(f"  + {outdir.name}/{name} ({pw}x{ph}, portrait SVG)")
 
 
 def gen_brand512() -> None:
