@@ -16,7 +16,7 @@ on:
   push:
     branches: [main]
     tags: ['v*']
-    paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', 'tools/gen-icons.py', '.github/workflows/build-dhgm.yml', 'VERSION']
+    paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', 'tools/gen-icons.py', 'bridge/**', 'plugin/**', '.github/workflows/build-dhgm.yml', 'VERSION']
 
 env:
   ATAK_REF: "4.6.0.5"   # ATAK-CIV-ის pinned stable tag (default branch = main; გაზარდე შეგნებულად, ტესტით)
@@ -48,6 +48,9 @@ jobs:
 
       - name: Checkout DHGM (overlay)
         uses: actions/checkout@v4
+
+      - name: Bridge unit tests
+        run: cd bridge && python3 -m unittest discover -s tests
 
       - name: Checkout ATAK-CIV
         run: |

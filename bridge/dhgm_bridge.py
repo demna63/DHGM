@@ -11,6 +11,7 @@
     python3 dhgm_bridge.py --sim                  # სიმულირებული დრონი თბილისზე
     python3 dhgm_bridge.py --sim --dry-run        # CoT stdout-ზე, ქსელის გარეშე
     python3 dhgm_bridge.py --cot-udp 192.168.1.50:4242   # unicast კონკრეტულ ტაბლეტზე
+    python3 dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550   # plugin JSON stream
 """
 
 import argparse
@@ -18,7 +19,7 @@ import math
 import socket
 import sys
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from xml.sax.saxutils import quoteattr, escape
 
 DEFAULT_MAVLINK = "0.0.0.0:14445"       # QGC forwardMavlinkHostName default პორტი
@@ -45,6 +46,10 @@ class DroneState:
         self.heading: Optional[float] = None  # გრადუსი
         self.groundspeed: Optional[float] = None  # მ/წმ
         self.battery_pct: Optional[int] = None
+        self.flight_mode: str = "UNKNOWN"
+        self.gps_fix: str = "UNKNOWN"
+        self.satellites: Optional[int] = None
+        self.rssi_dbm: Optional[int] = None
         self.last_seen = 0.0
 
     @property
@@ -164,8 +169,14 @@ def mavlink_loop(conn_str: str, states: Dict[int, DroneState]) -> None:
             st.last_seen = time.time()
         elif t == "SYS_STATUS":
             st.battery_pct = msg.battery_remaining
+        elif t == "GPS_RAW_INT":
+            from plugin_json import gps_fix_name
+            st.gps_fix = gps_fix_name(msg.fix_type)
+            st.satellites = msg.satellites_visible
+            st.last_seen = time.time()
         elif t == "HEARTBEAT":
             st.last_seen = time.time()
+            st.flight_mode = str(msg.custom_mode)
 
 
 def sim_step(st: DroneState, t0: float) -> None:
@@ -181,6 +192,9 @@ def sim_step(st: DroneState, t0: float) -> None:
     st.groundspeed = speed
     st.heading = (math.degrees(ang) + 90.0) % 360.0
     st.battery_pct = max(0, 100 - int(elapsed / 30))
+    st.flight_mode = "AUTO"
+    st.gps_fix = "3D"
+    st.satellites = 12
     st.last_seen = time.time()
 
 
@@ -197,6 +211,8 @@ def main() -> int:
     p.add_argument("--prefix", default="DH", help="callsign პრეფიქსი (default: DH)")
     p.add_argument("--sim", action="store_true", help="სიმულირებული დრონი MAVLink-ის გარეშე")
     p.add_argument("--dry-run", action="store_true", help="CoT stdout-ზე, გაგზავნის გარეშე")
+    p.add_argument("--plugin-tcp", default="", metavar="HOST:PORT",
+                   help="DHGM plugin-ისთვის TCP JSON stream (მაგ. 127.0.0.1:14550)")
     p.add_argument("--max-ticks", type=int, default=0, help="გაჩერდი N tick-ის შემდეგ (ტესტისთვის)")
     args = p.parse_args()
 
@@ -206,6 +222,13 @@ def main() -> int:
     sender = CotSender(targets, dry_run=args.dry_run)
     states: Dict[int, DroneState] = {}
     t0 = time.time()
+    plugin_hub = None
+    if args.plugin_tcp and not args.dry_run:
+        from plugin_tcp import PluginTcpHub
+        plugin_hub = PluginTcpHub(args.plugin_tcp)
+        print("[dhgm] plugin TCP → %s" % plugin_hub.bind, file=sys.stderr)
+    active_sysids: Set[int] = set()
+    prev_plugin_clients = 0
 
     if args.sim:
         states[1] = DroneState(1)
@@ -218,21 +241,40 @@ def main() -> int:
     if not args.dry_run:
         print("[dhgm] CoT → %s" % ", ".join("%s:%d" % t for t in sender.targets), file=sys.stderr)
 
+    from plugin_json import bridge_hello_line, drone_gone_line, telemetry_line
+
     ticks = 0
     try:
         while True:
             now = time.time()
             if args.sim:
                 sim_step(states[1], t0)
+            current_active: Set[int] = set()
             for st in states.values():
                 if st.has_fix and now - st.last_seen < args.stale:
+                    current_active.add(st.sysid)
                     sender.send(cot_event(st, now, args.stale, args.prefix))
+                    if plugin_hub:
+                        line = telemetry_line(st, now, args.prefix)
+                        if line:
+                            plugin_hub.broadcast(line)
+            if plugin_hub:
+                cc = plugin_hub.client_count()
+                if cc > prev_plugin_clients:
+                    plugin_hub.broadcast(bridge_hello_line(sorted(current_active)))
+                prev_plugin_clients = cc
+                for gone in active_sysids - current_active:
+                    plugin_hub.broadcast(drone_gone_line(gone))
+            active_sysids = current_active
             ticks += 1
             if args.max_ticks and ticks >= args.max_ticks:
                 break
             time.sleep(1.0 / args.rate)
     except KeyboardInterrupt:
         print("\n[dhgm] გაჩერდა", file=sys.stderr)
+    finally:
+        if plugin_hub:
+            plugin_hub.close()
     return 0
 
 

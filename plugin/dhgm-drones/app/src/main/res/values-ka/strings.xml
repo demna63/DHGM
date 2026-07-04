@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dhgm_drones_title">დრონები</string>
+    <string name="dhgm_drones_summary">DroneHub ცოცხალი ტელემეტრიის პანელი</string>
+    <string name="dhgm_bridge_disconnected">Bridge არ არის დაკავშირებული (127.0.0.1:14550)</string>
+    <string name="dhgm_bridge_line">Bridge: %1$s</string>
+</resources>
