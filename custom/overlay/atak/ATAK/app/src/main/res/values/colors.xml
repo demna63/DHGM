@@ -75,4 +75,7 @@
     <color name="text_shadow">#7F000000</color>
     <color name="bloodhound_info_widget_text_color">#b3ffbe</color>
     <color name="seekbar_background">#80000000</color>
+
+    <!-- Adaptive launcher icon background (API 26+) -->
+    <color name="dhgm_launcher_bg">#0B0E14</color>
 </resources>

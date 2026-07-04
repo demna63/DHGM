@@ -17,6 +17,21 @@ echo "== 2/7: overlay ფაილების კოპირება (custom/
 rsync -a --out-format="  + %n" custom/overlay/atak/ atak/atak/
 
 echo "== 3/7: branding (app label ATAK → DHGM) =="
+MANIFEST=atak/atak/ATAK/app/src/main/AndroidManifest.xml
+if [ -f "$MANIFEST" ]; then
+  if grep -q 'android:icon="@drawable/ic_atak_launcher"' "$MANIFEST"; then
+    sed -i '' 's|android:icon="@drawable/ic_atak_launcher"|android:icon="@mipmap/ic_atak_launcher"|g' "$MANIFEST" 2>/dev/null \
+      || sed -i 's|android:icon="@drawable/ic_atak_launcher"|android:icon="@mipmap/ic_atak_launcher"|g' "$MANIFEST"
+    echo "  ✓ launcher icon → @mipmap/ic_atak_launcher (adaptive API 26+)"
+  elif grep -q 'android:icon="@mipmap/ic_atak_launcher"' "$MANIFEST"; then
+    echo "  ✓ launcher icon უკვე @mipmap/ic_atak_launcher-ია"
+  fi
+  if grep -q 'android:icon="@drawable/ic_mil_atak_launcher"' "$MANIFEST"; then
+    sed -i '' 's|android:icon="@drawable/ic_mil_atak_launcher"|android:icon="@mipmap/ic_mil_atak_launcher"|g' "$MANIFEST" 2>/dev/null \
+      || sed -i 's|android:icon="@drawable/ic_mil_atak_launcher"|android:icon="@mipmap/ic_mil_atak_launcher"|g' "$MANIFEST"
+    echo "  ✓ mil launcher icon → @mipmap/ic_mil_atak_launcher"
+  fi
+fi
 STRINGS=atak/atak/ATAK/app/src/main/res/values/strings.xml
 if grep -q '<string name="app_name" translatable="false">ATAK</string>' "$STRINGS"; then
   sed -i '' 's|<string name="app_name" translatable="false">ATAK</string>|<string name="app_name" translatable="false">DHGM</string>|' "$STRINGS" 2>/dev/null \
