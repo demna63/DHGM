@@ -1,0 +1,99 @@
+apply plugin: 'com.android.application'
+apply plugin: 'atak-takdev-plugin'
+
+// DHGM Drones plugin — civ flavor only, ATAK plugin SDK-ის წინააღმდეგ (takdev).
+// SDK (main.jar + atak.apk + keystore) იძებნება sdk.path-ით (CI ავსებს civSdk build-იდან).
+
+buildscript {
+    ext.PLUGIN_VERSION = "0.1.0"
+    ext.ATAK_VERSION = "4.6.0.5"
+
+    def takdevVersion = '2.+'
+    def getValueFromPropertiesFile = { propFile, key ->
+        if (!propFile.isFile() || !propFile.canRead()) return null
+        def prop = new Properties()
+        propFile.withReader { prop.load(it) }
+        return prop.get(key)
+    }
+    def getProperty = { name, defValue ->
+        def val = getValueFromPropertiesFile(project.rootProject.file('local.properties'), name)
+        return val != null ? val : (project.properties[name] ?: defValue)
+    }
+    ext.getValueFromPropertiesFile = getValueFromPropertiesFile
+    ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak/atak-gradle-takdev.jar")
+
+    repositories {
+        google(); mavenCentral(); mavenLocal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath files(takdevPlugin)
+    }
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
+
+    dexOptions { jumboMode = true }
+    lintOptions { checkReleaseBuilds true; abortOnError false }
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+        versionCode 1
+        versionName PLUGIN_VERSION
+    }
+
+    signingConfigs {
+        debug {
+            def kf = getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takDebugKeyFile')
+            if (kf == null) throw new GradleException("No signing key configured!")
+            storeFile file(kf)
+            storePassword getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takDebugKeyFilePassword')
+            keyAlias getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takDebugKeyAlias')
+            keyPassword getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takDebugKeyPassword')
+        }
+        release {
+            def kf = getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takReleaseKeyFile')
+            if (kf == null) throw new GradleException("No signing key configured!")
+            storeFile file(kf)
+            storePassword getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takReleaseKeyFilePassword')
+            keyAlias getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takReleaseKeyAlias')
+            keyPassword getValueFromPropertiesFile(project.rootProject.file('local.properties'), 'takReleaseKeyPassword')
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            matchingFallbacks = ['sdk']
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            proguardFile 'proguard-gradle.txt'
+            signingConfig signingConfigs.release
+            matchingFallbacks = ['odk']
+        }
+    }
+
+    flavorDimensions "application"
+    productFlavors {
+        civ {
+            getIsDefault().set(true)
+            dimension "application"
+            manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".CIV"]
+        }
+    }
+
+    sourceSets {
+        main {
+            setProperty("archivesBaseName", "DHGM-Drones-" + PLUGIN_VERSION)
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}

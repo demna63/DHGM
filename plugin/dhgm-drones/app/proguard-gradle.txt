@@ -1,0 +1,10 @@
+# DHGM Drones plugin — ATAK plugin-ის აუცილებელი keep წესები
+-keep class ge.dronehub.dhgm.plugin.** { *; }
+-keep class atakplugin.** { *; }
+-keepclassmembers class * {
+    public <init>(android.content.Context);
+    public <init>(com.atakmap.android.maps.MapView, android.content.Context);
+}
+-dontwarn com.atakmap.**
+-dontwarn transapps.**
+-dontwarn gov.tak.**

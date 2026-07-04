@@ -193,6 +193,51 @@ jobs:
           name: DHGM-${{ steps.ver.outputs.version }}-civ-sdk
           path: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
 
+      # ── ფაზა 2: DHGM Drones plugin (იმავე job-ში, app-ის SDK-ს იყენებს) ──
+      - name: Prepare plugin SDK (takdev offline)
+        id: pluginsdk
+        continue-on-error: true
+        run: |
+          SDK=plugin/dhgm-drones/sdk
+          mkdir -p "$SDK"
+          # main.jar (plugin API) + atak.apk — civSdk build-ის პროდუქტები
+          cp atak/atak/ATAK/app/build/libs/main.jar "$SDK/" 2>/dev/null || echo "::warning::main.jar ვერ მოიძებნა"
+          APK=$(find atak/atak/ATAK/app/build/outputs/apk/civ/sdk -name "*.apk" | head -1)
+          cp "$APK" "$SDK/atak.apk" 2>/dev/null || echo "::warning::atak.apk ვერ მოიძებნა"
+          # atak-gradle-takdev.jar — plugin build.gradle-ს სჭირდება
+          find atak -name "atak-gradle-takdev*.jar" -exec cp {} atak/atak-gradle-takdev.jar \; 2>/dev/null || true
+          # gradle wrapper (atak-იდან) + local.properties (signing + sdk.path)
+          cp -r atak/atak/gradle plugin/dhgm-drones/ 2>/dev/null || true
+          cp atak/atak/gradlew plugin/dhgm-drones/ 2>/dev/null || true
+          cat > plugin/dhgm-drones/local.properties <<EOF
+          sdk.dir=$ANDROID_HOME
+          sdk.path=$GITHUB_WORKSPACE/plugin/dhgm-drones/sdk
+          takDebugKeyFile=$GITHUB_WORKSPACE/custom/keys/dhgm.keystore
+          takDebugKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takDebugKeyAlias=dhgm-debug
+          takDebugKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takReleaseKeyFile=$GITHUB_WORKSPACE/custom/keys/dhgm.keystore
+          takReleaseKeyFilePassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          takReleaseKeyAlias=dhgm-release
+          takReleaseKeyPassword=${{ secrets.DHGM_KEYSTORE_PASS }}
+          EOF
+          ls -la "$SDK"
+
+      - name: Build DHGM Drones plugin
+        id: pluginbuild
+        continue-on-error: true
+        working-directory: plugin/dhgm-drones
+        run: |
+          chmod +x gradlew || true
+          ./gradlew assembleCivRelease --stacktrace
+
+      - name: Upload plugin APK
+        if: steps.pluginbuild.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DHGM-Drones-plugin-${{ steps.ver.outputs.version }}
+          path: plugin/dhgm-drones/app/build/outputs/apk/**/*.apk
+
       - name: Create GitHub Release (tag push only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
