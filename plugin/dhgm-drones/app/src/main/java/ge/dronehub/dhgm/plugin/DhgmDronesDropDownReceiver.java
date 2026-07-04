@@ -65,7 +65,8 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
     public void onDropDownVisible(boolean v) {
     }
 
-    public void dispose() {
+    @Override
+    protected void disposeImpl() {
         bridgeClient.disconnect();
     }
 }
