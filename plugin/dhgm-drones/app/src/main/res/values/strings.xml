@@ -11,4 +11,7 @@
     <string name="dhgm_card_altspeed">ALT %1$s · SPD %2$.1f m/s · HDG %3$.0f°</string>
     <string name="dhgm_card_modegps">%1$s · GPS %2$s%3$s</string>
     <string name="dhgm_batt_unknown">—</string>
+    <string name="dhgm_host_hint">host:port (მაგ. 192.168.1.243:14550)</string>
+    <string name="dhgm_connect">Connect</string>
+    <string name="dhgm_connecting">Connecting to %1$s…</string>
 </resources>

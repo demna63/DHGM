@@ -10,4 +10,7 @@
     <string name="dhgm_card_altspeed">სიმაღლე %1$s · სიჩქარე %2$.1f მ/წმ · კურსი %3$.0f°</string>
     <string name="dhgm_card_modegps">%1$s · GPS %2$s%3$s</string>
     <string name="dhgm_batt_unknown">—</string>
+    <string name="dhgm_host_hint">host:port (მაგ. 192.168.1.243:14550)</string>
+    <string name="dhgm_connect">დაკავშირება</string>
+    <string name="dhgm_connecting">ვუკავშირდები %1$s…</string>
 </resources>

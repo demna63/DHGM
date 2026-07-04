@@ -6,7 +6,9 @@ apply plugin: 'atak-takdev-plugin'
 
 buildscript {
     ext.PLUGIN_VERSION = "0.1.0"
-    ext.ATAK_VERSION = "4.6.0.5"
+    // ⚠️ plugin-api version ზუსტად app-ის ATAK_VERSION-ს უნდა ემთხვეოდეს (subminor-ის გარეშე):
+    // app: com.atakmap.app@4.6.0.CIV → plugin-იც 4.6.0 (არა 4.6.0.5) — თორემ Incompatible.
+    ext.ATAK_VERSION = "4.6.0"
 
     def takdevVersion = '2.+'
     ext.getValueFromPropertiesFile = { propFile, key ->

@@ -15,6 +15,35 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <EditText
+            android:id="@+id/dhgm_host_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/dhgm_host_hint"
+            android:textColor="@color/dhgm_text_primary"
+            android:textColorHint="@color/dhgm_text_secondary"
+            android:textSize="14sp"
+            android:inputType="textNoSuggestions"
+            android:maxLines="1" />
+
+        <Button
+            android:id="@+id/dhgm_connect_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/dhgm_connect"
+            android:textColor="@color/dhgm_bg_surface"
+            android:background="@color/dhgm_telemetry" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/dhgm_bridge_status"
         android:layout_width="match_parent"
