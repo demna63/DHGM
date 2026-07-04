@@ -52,6 +52,11 @@ jobs:
       - name: Bridge unit tests
         run: cd bridge && python3 -m unittest discover -s tests
 
+      - name: Generate brand assets (icons + splash)
+        run: |
+          pip install -q cairosvg pillow
+          python3 tools/gen-icons.py
+
       - name: Checkout ATAK-CIV
         run: |
           git lfs install

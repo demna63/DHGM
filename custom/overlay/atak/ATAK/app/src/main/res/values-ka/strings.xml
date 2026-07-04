@@ -365,4 +365,27 @@
     <string name="failed_to_export_logs">ლოგების ექსპორტი ვერ მოხერხდა</string>
     <string name="vehicle_model">ტრანსპორტის მოდელი</string>
     <string name="aircraft_title">საფრინავი:</string>
+
+    <!-- ბლოკი 8: პირველი გაშვება — EULA, encryption, ფაილების წვდომა -->
+    <string name="preferences_text422a">სასამართლო ლიცენზიის შეთანხმება</string>
+    <string name="preferences_text423">სასამართლო ლიცენზიის შეთანხმების (EULA) სანახავად დააჭირეთ ქვემოთ მოცემულ ღილაკს.</string>
+    <string name="preferences_text424">„ვეთანხმები" ღილაკზე დაჭერით ეთანხმებით EULA-ის პირობებს.</string>
+    <string name="preferences_text425">ვეთანხმები.</string>
+    <string name="preferences_text426">ვუარყოფ.</string>
+    <string name="preferences_text415">EULA-ის ნახვა</string>
+    <string name="create_encryption_passphrase">აირჩიეთ ახალი დაშიფვრის პაროლი თქვენი მონაცემებისთვის.</string>
+    <string name="encryption_passphrase_prompt">შეიყვანეთ დაშიფვრის პაროლი, რომელიც მონაცემების დაშიფვრისას მიუთითეთ.</string>
+    <string name="encryption_passphrase_title">დაშიფვრის პაროლი</string>
+    <string name="file_system_access_changes">ფაილური სისტემის წვდომის ცვლილებები</string>
+    <string name="i_understand">გასაგებია</string>
+    <string name="required_missing_permissions">აუცილებელი ნებართვები აკლია</string>
+    <string name="use_your_location_title">თქვენი მდებარეობის გამოყენება</string>
+    <string name="android_11_warning">Android 11+ გაფრთხილება</string>
+    <string name="invalid_passphrase">არასწორი პაროლი</string>
+    <string name="invalid_passphrase_tick">პაროლი არ შეიძლება შეიცავდეს \' სიმბოლოს</string>
+    <string name="encrypted_removal">დაშიფრული მონაცემების წაშლა</string>
+    <string name="encrypted_removal_message">დაშიფრული მონაცემთა ბაზები წაიშლება. გავაგრძელოთ?</string>
+    <string name="remove_and_quit">წაშლა და გასვლა</string>
+    <string name="preferences_text410">სისტემა ჯერ იტვირთება. სცადეთ მოგვიანებით.</string>
+    <string name="preferences_text417">გთხოვთ დაელოდოთ…</string>
 </resources>

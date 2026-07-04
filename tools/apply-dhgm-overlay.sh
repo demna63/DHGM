@@ -7,10 +7,16 @@ cd "$(dirname "$0")/.."
 
 [ -d atak/atak ] || { echo "✗ atak/ არ არის დაკლონილი — ჯერ tools/bootstrap-atak.sh"; exit 1; }
 
-echo "== 1/6: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
+if [ -f tools/gen-icons.py ] && [ -f custom/brand/dhgm-logo.svg ]; then
+  echo "== 0/7: brand assets (SVG → PNG) =="
+  pip install -q cairosvg pillow 2>/dev/null || true
+  python3 tools/gen-icons.py || echo "  ⚠ gen-icons.py ვერ გაეშვა (cairosvg/pillow?)"
+fi
+
+echo "== 1/7: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
 rsync -a --out-format="  + %n" custom/overlay/atak/ atak/atak/
 
-echo "== 2/6: branding (app label ATAK → DHGM) =="
+echo "== 2/7: branding (app label ATAK → DHGM) =="
 STRINGS=atak/atak/ATAK/app/src/main/res/values/strings.xml
 if grep -q '<string name="app_name" translatable="false">ATAK</string>' "$STRINGS"; then
   sed -i '' 's|<string name="app_name" translatable="false">ATAK</string>|<string name="app_name" translatable="false">DHGM</string>|' "$STRINGS" 2>/dev/null \
@@ -22,7 +28,7 @@ else
   echo "  ⚠ app_name-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე ხელით: $STRINGS"
 fi
 
-echo "== 3/6: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
+echo "== 3/7: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
 GRADLE=atak/atak/ATAK/app/build.gradle
 if grep -q "'\"DEVELOPER BUILD\"'" "$GRADLE"; then
   sed -i '' "s|'\"DEVELOPER BUILD\"'|'\"\"'|" "$GRADLE" 2>/dev/null \
@@ -34,7 +40,7 @@ else
   echo "  ⚠ DEV_BANNER-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე: $GRADLE"
 fi
 
-echo "== 4/6: package identity (applicationId + APK სახელი) =="
+echo "== 4/7: package identity (applicationId + APK სახელი) =="
 if grep -q 'applicationId = "com.atakmap.app"' "$GRADLE"; then
   sed -i '' 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE" 2>/dev/null \
     || sed -i 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE"
@@ -58,7 +64,7 @@ elif grep -q 'setProperty("archivesBaseName", "DHGM-"' "$GRADLE"; then
   echo "  ✓ archivesBaseName უკვე DHGM-ია"
 fi
 
-echo "== 5/6: სისტემური ზოლების ფერი (status/navigation bar) =="
+echo "== 5/7: სისტემური ზოლების ფერი (status/navigation bar) =="
 STYLES=atak/atak/ATAK/app/src/main/res/values/styles.xml
 if [ -f "$STYLES" ] && ! grep -q 'android:statusBarColor' "$STYLES"; then
   sed -i '' 's|android:navigationBarColor">@android:color/black|android:navigationBarColor">@color/darker_gray|g' "$STYLES" 2>/dev/null \
@@ -72,7 +78,7 @@ elif [ -f "$STYLES" ] && grep -q 'android:statusBarColor' "$STYLES"; then
   echo "  ✓ statusBarColor უკვე დაყენებულია"
 fi
 
-echo "== 6/6: encryption passphrase auto-key (first-run დიალოგის მოხსნა) =="
+echo "== 6/7: encryption passphrase auto-key (first-run დიალოგის მოხსნა) =="
 DBH=atak/atak/ATAK/app/src/main/java/com/atakmap/app/ATAKDatabaseHelper.java
 python3 - "$DBH" <<'PY'
 import sys

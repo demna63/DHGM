@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#151A23"
+    android:background="@color/dhgm_bg_surface"
     android:orientation="vertical"
     android:padding="12dp">
 
@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/dhgm_drones_title"
-        android:textColor="#64D2FF"
+        android:textColor="@color/dhgm_telemetry"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/dhgm_bridge_disconnected"
-        android:textColor="#9AA6B8"
+        android:textColor="@color/dhgm_text_secondary"
         android:textSize="13sp" />
 
     <ScrollView
