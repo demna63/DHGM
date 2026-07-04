@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin>
+    <extension
+        type="transapps.maps.plugin.lifecycle.Lifecycle"
+        impl="ge.dronehub.dhgm.plugin.DhgmDronesLifecycle"
+        singleton="true" />
+
+    <extension
+        type="transapps.maps.plugin.tool.ToolDescriptor"
+        impl="ge.dronehub.dhgm.plugin.DhgmDronesTool"
+        singleton="true" />
+</plugin>

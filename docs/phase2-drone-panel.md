@@ -1,0 +1,171 @@
+# ფაზა 2 — DHGM დრონის პანელი (მონახაზი)
+
+> სტატუსი: **მონახაზი** — იმპლემენტაცია ფაზა 1 (APK + overlay) დასრულების შემდეგ.
+> ეს დოკუმენტი UI/UX + პროტოკოლის სპეციფიკაციაა; კოდი `plugin/` მოდულში დაიწყება.
+
+## მიზანი
+
+DroneHub GCS-ის ტელემეტრია რუკაზე CoT-ით ჩანს, მაგრამ CoT შეზღუდულია (ბატარეა, სიმაღლე, კურსი).
+**DHGM plugin** იძლევა:
+
+- დრონების სიას ცოცხალი ტელემეტრიით (სიმაღლე, სიჩქარე, ბატარეა, რეჟიმი, GPS fix, RSSI)
+- tap → follow + breadcrumb trail
+- პირდაპირი კავშირი `dhgm-bridge`-თან (TCP JSON), CoT-ის გარდა
+
+## არქიტექტურა
+
+```mermaid
+flowchart LR
+  GCS[DroneHub GCS] -->|MAVLink UDP :14445| Bridge[dhgm-bridge]
+  Bridge -->|CoT UDP 239.2.3.1:6969| ATAK[DHGM core / რუკა]
+  Bridge -->|TCP JSON :14550| Plugin[DHGM plugin]
+  Plugin --> ATAK
+```
+
+| არხი | პროტოკოლი | დანიშნულება |
+|------|-----------|-------------|
+| CoT multicast | UDP 239.2.3.1:6969 | რუკაზე ხატულა, გუნდური SA (არსებული) |
+| Plugin stream | TCP localhost:14550 | მდიდარი ტელემეტრია, მრავალდრონიანი პანელი |
+
+Bridge გაფართოება (ფაზა 2a): `--plugin-tcp 0.0.0.0:14550` — იგივე `DroneState`, JSON ხაზებად.
+
+## UI მონახაზი — დრონის პანელი
+
+### განლაგება (მარჯვენა drawer / ქვედა sheet)
+
+```
+┌─────────────────────────────────────┐
+│  დრონები (2)              [↻] [⚙]  │  ← teal accent #17A79A
+├─────────────────────────────────────┤
+│ ● DH-1   120m AGL   15 m/s   87%   │  ← მწვანე = connected
+│   რეჟიმი: AUTO   GPS: 3D Fix        │
+│   [თვალყურის დევნება]  [დეტალები]  │
+├─────────────────────────────────────┤
+│ ○ DH-2   — stale 2m ago             │  ← ნაცარი = stale
+│   ბოლო: 41.71°N 44.83°E            │
+├─────────────────────────────────────┤
+│  + bridge არ არის დაკავშირებული     │  ← ცარიელი მდგომარეობა
+└─────────────────────────────────────┘
+```
+
+### ვიზუალური ტოკენები (DroneHub პალიტრა)
+
+| ელემენტი | ფერი | გამოყენება |
+|----------|------|------------|
+| ფონი | `#151A23` (bgSurface) | პანელის ფონი |
+| სათაური | `#64D2FF` (telemetry) | სათაური, მეტრიკები |
+| აქტიური | `#17A79A` (teal) | follow, არჩეული დრონი |
+| OK | `#30D158` | დაკავშირებული, ბატარეა >20% |
+| გაფრთხილება | `#FF453A` | დაბალი ბატარეა, კავშირი არაა |
+| ტექსტი | `#D0D8E4` / `#9AA6B8` | primary / secondary |
+
+### ქცევები
+
+| მოქმედება | შედეგი |
+|-----------|--------|
+| ბარათზე tap | რუკაზე ცენტრირება + highlight |
+| „თვალყურის დევნება" | camera follow (ATAK MapItem follow API) |
+| long press | breadcrumb trail on/off |
+| swipe left | დრონის დამალვა (მხოლოდ plugin სიიდან; CoT რჩება) |
+| ⚙ | bridge host:port, refresh rate, stale timeout |
+
+### დეტალების ეკრანი (modal)
+
+```
+DH-1  (sysid 1)
+─────────────────
+სიმაღლე AGL:    120 m
+სიმაღლე MSL:    450 m
+სიჩქარე:        15.2 m/s
+კურსი:          247°
+ბატარეა:        87%
+რეჟიმი:         AUTO (PX4)
+GPS:            3D Fix (12 sats)
+RSSI:           -72 dBm
+ბოლო განახლება: 0.8 წმ წინ
+─────────────────
+[Follow]  [Breadcrumbs]  [CoT დეტალები]
+```
+
+## TCP JSON პროტოკოლი (სპეკი v0.1)
+
+თითო ხაზი = ერთი JSON object (newline-delimited JSON).
+
+### `telemetry` (bridge → plugin, 1 Hz / დრონზე)
+
+```json
+{
+  "type": "telemetry",
+  "ts": 1751600000.12,
+  "sysid": 1,
+  "callsign": "DH-1",
+  "lat": 41.7151,
+  "lon": 44.8271,
+  "alt_agl_m": 120.0,
+  "alt_msl_m": 450.0,
+  "speed_mps": 15.2,
+  "course_deg": 247.0,
+  "battery_pct": 87,
+  "flight_mode": "AUTO",
+  "gps_fix": "3D",
+  "satellites": 12,
+  "rssi_dbm": -72
+}
+```
+
+### `drone_gone` (stale timeout შემდეგ)
+
+```json
+{"type": "drone_gone", "sysid": 1, "reason": "stale"}
+```
+
+### `bridge_hello` (კავშირის დადებისას)
+
+```json
+{"type": "bridge_hello", "version": "0.1.0", "drones": [1]}
+```
+
+## Plugin სტრუქტურა (დაგეგმილი)
+
+```
+plugin/
+└── dhgm-drones/
+    ├── plugin.xml              ← ATAK plugin descriptor
+    ├── build.gradle
+    └── src/main/
+        ├── java/ge/dronehub/dhgm/plugin/
+        │   ├── DhgmDronesLifecycle.java
+        │   ├── DronePanelDropDown.java    ← UI
+        │   ├── BridgeTcpClient.java       ← JSON stream
+        │   └── DroneFollowManager.java
+        └── res/
+            ├── layout/drone_panel.xml
+            ├── layout/drone_card.xml
+            └── values-ka/strings.xml
+```
+
+## იმპლემენტაციის ეტაპები
+
+| # | ეტაპი | დამოკიდებულება |
+|---|-------|----------------|
+| 1 | Bridge `--plugin-tcp` + JSON emit | ფაზა 0 |
+| 2 | Plugin scaffold + `plugin.xml` | ATAK SDK build |
+| 3 | `BridgeTcpClient` + mock data | ეტაპი 1–2 |
+| 4 | `DronePanelDropDown` UI (ka) | დიზაინ ტოკენები |
+| 5 | Follow + breadcrumbs | ATAK Map API |
+| 6 | პარამეტრები (host/port) | plugin preferences |
+
+## მინიმალური მიღების კრიტერიუმები (MVP)
+
+- [ ] 2+ დრონი სიაში `--sim` რეჟიმში
+- [ ] ქართული UI პანელში
+- [ ] tap → რუკაზე ცენტრირება
+- [ ] follow ერთ დრონზე
+- [ ] stale დრონი ვიზუალურად განსხვავდება
+- [ ] bridge გათიშვისას „არ არის დაკავშირებული" მდგომარეობა
+
+## გარე ბმულები
+
+- ფაზა 0 bridge: `bridge/dhgm_bridge.py`
+- ფერები: `custom/overlay/.../values/colors.xml`
+- ATAK plugin SDK: upstream `atak/docs/plugins/`

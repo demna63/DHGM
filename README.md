@@ -40,6 +40,8 @@ bridge თითო დრონზე (MAVLink sysid) აგზავნის 
 
 ტესტები: `cd bridge && python3 -m unittest discover -s tests`
 
+Plugin TCP (ფაზა 2a): `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550`
+
 ### ფაზა 1 — DHGM fork (branding + ქართული)
 
 **Build სტრატეგია:** ATAK-ის native ჯაჭვი (NDK r12b, takthirdparty, conan) **Linux-only**-ია —

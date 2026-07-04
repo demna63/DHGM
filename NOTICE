@@ -1,0 +1,37 @@
+DHGM (DroneHub Georgia Map)
+==============================
+
+This product includes software developed as part of the DroneHub ecosystem.
+
+Primary components
+------------------
+
+1. **DHGM application** — derivative of ATAK-CIV, with overlay customizations
+   in `custom/overlay/` (Georgian strings, branding, permissions).
+
+2. **dhgm-bridge** — Python MAVLink → CoT bridge (`bridge/`), independent
+   component using pymavlink (LGPL-3.0-or-later).
+
+Upstream — ATAK-CIV
+-------------------
+
+  Project:  Android Tactical Assault Kit — Civil (ATAK-CIV)
+  Source:   https://github.com/deptofdefense/AndroidTacticalAssaultKit-CIV
+  License:  GNU General Public License v3.0 (or later)
+  Version:  pinned at tag 4.6.0.5 for DHGM builds (see `.github/workflows/build-dhgm.yml`)
+
+ATAK-CIV bundles numerous third-party native libraries via `takthirdparty`
+(GDAL, spatialite, assimp, openssl, and others). See upstream `atak/takthirdparty`
+for component licenses.
+
+DroneHub GCS (related project)
+------------------------------
+
+  MAVLink telemetry source for DHGM; not bundled in this APK.
+  Repository: sibling project DroneHub-GCS (QGroundControl fork).
+
+Trademarks
+----------
+
+ATAK and TAK are trademarks of the U.S. Government / TAK Product Center.
+DHGM and DroneHub Georgia are branding used for this localized distribution.

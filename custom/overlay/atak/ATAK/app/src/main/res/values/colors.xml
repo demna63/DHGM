@@ -30,8 +30,8 @@
 
     <!-- PRESET -->
 
-    <color name="actionbar_background">#B30B0E14</color>
-    <color name="actionbar_background_empty">#440B0E14</color>
+    <color name="actionbar_background">#CC0B0E14</color>
+    <color name="actionbar_background_empty">#660B0E14</color>
     <color name="light_blue">#64D2FF</color>
 
     <color name="th_green">#ff30D158</color>
@@ -58,7 +58,9 @@
     <color name="trolley_grey">#818181</color>
     <color name="hansa_yellow">#64D2FF</color>
 
-    <color name="toolbar_tint">#151A23</color>
+    <color name="toolbar_tint">#1E2E4F</color>
+    <color name="dhgm_toolbar_active">#17A79A</color>
+    <color name="dhgm_toolbar_icon">#D0D8E4</color>
     <color name="hilight_yellow">@color/hansa_yellow</color>
     <color name="listview_divider">@color/manatee</color>
     <color name="listview_background">#151A23</color>
