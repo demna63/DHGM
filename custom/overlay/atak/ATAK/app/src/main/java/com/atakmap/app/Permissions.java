@@ -51,28 +51,66 @@ public class Permissions {
             return true;
         }
 
+        // Android 11+ (R): READ/WRITE_EXTERNAL_STORAGE აღარ გაიცემა (scoped storage) —
+        // მათი მოთხოვნა მარყუჟს ქმნის. DHGM აქ საერთოდ არ ბლოკავს გაშვებას; რუკის
+        // ფაილებზე სრული წვდომა (All files access) ნებაყოფლობითია და მოგვიანებით,
+        // არა-მბლოკავად ეთხოვება მომხმარებელს (იხ. maybePromptAllFilesAccess).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            maybePromptAllFilesAccess(a);
+            Log.d(TAG, "DHGM: startup not gated on Android 11+ "
+                    + "(storage/camera/mic/location all optional)");
+            return true;
+        }
+
+        // Android 6..10 (M..Q): legacy storage ნებართვა ჯერ კიდევ გაიცემა
         int result = 0;
         for (String permission : PermissionsList) {
             result += a.checkSelfPermission(permission);
         }
-
         if (result != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "DHGM: requesting required storage permissions only");
+            Log.d(TAG, "DHGM: requesting legacy storage permissions (pre-R)");
             a.requestPermissions(PermissionsList, REQUEST_ID);
             return false;
         }
-
-        // Android 11+: "All files access" რუკების/data package-ების იმპორტს სჭირდება
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                showFileSystemWarning(a);
-                return false;
-            }
-        }
-
-        Log.d(TAG, "DHGM: required permissions granted "
-                + "(camera/mic/location are optional and not gated)");
         return true;
+    }
+
+    /**
+     * Android 11+: "All files access"-ს ვთხოვთ ერთხელ, მაგრამ უარი გაშვებას არ ბლოკავს —
+     * მომხმარებელი შედის აპში ისედაც. (upstream აქ finish()-ით ხურავდა აპს.)
+     */
+    @TargetApi(30)
+    private static void maybePromptAllFilesAccess(final Activity a) {
+        try {
+            if (Environment.isExternalStorageManager())
+                return;
+            final AlertDialog.Builder builder = new AlertDialog.Builder(a);
+            builder.setTitle(R.string.file_system_access_changes);
+            builder.setMessage(
+                    "DHGM-ს რუკებისა და მონაცემთა პაკეტების სრული გამოყენებისთვის "
+                            + "„All files access“ სჭირდება. შეგიძლიათ ახლავე ჩართოთ "
+                            + "ან მოგვიანებით, პარამეტრებიდან. აპი ორივე შემთხვევაში გაიხსნება.");
+            builder.setCancelable(true);
+            builder.setPositiveButton(R.string.i_understand,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            try {
+                                final Uri uri = Uri.parse(
+                                        "package:" + BuildConfig.APPLICATION_ID);
+                                a.startActivity(new Intent(
+                                        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                        uri));
+                            } catch (Exception e) {
+                                Log.w(TAG, "All files access settings not available", e);
+                            }
+                        }
+                    });
+            builder.setNegativeButton(R.string.cancel, null);
+            builder.show();
+        } catch (Exception e) {
+            Log.w(TAG, "maybePromptAllFilesAccess failed (non-fatal)", e);
+        }
     }
 
     @TargetApi(30)
