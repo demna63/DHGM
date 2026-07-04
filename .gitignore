@@ -15,3 +15,6 @@ __pycache__/
 *.orig
 .idea/
 .vscode/
+
+# თარგმანის დროებითი ფრაგმენტები (merge-ka-parts.py)
+/custom/overlay/atak/ATAK/app/src/main/res/values-ka/parts/

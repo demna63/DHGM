@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPSTREAM = os.path.join(ROOT, "atak/atak/ATAK/app/src/main/res/values/strings.xml")
+UPSTREAM_FALLBACK = "/tmp/atak_strings.xml"  # CI/აგენტის გარემოში bootstrap-ის გარეშე
 KA = os.path.join(ROOT, "custom/overlay/atak/ATAK/app/src/main/res/values-ka/strings.xml")
 
 
@@ -24,8 +25,13 @@ def main() -> int:
     args = p.parse_args()
 
     if not os.path.exists(UPSTREAM):
-        print("✗ upstream strings.xml არ არის — ჯერ tools/bootstrap-atak.sh", file=sys.stderr)
-        return 1
+        if os.path.exists(UPSTREAM_FALLBACK):
+            upstream = UPSTREAM_FALLBACK
+        else:
+            print("✗ upstream strings.xml არ არის — ჯერ tools/bootstrap-atak.sh", file=sys.stderr)
+            return 1
+    else:
+        upstream = UPSTREAM
 
     done = set()
     if os.path.exists(KA):
@@ -33,7 +39,7 @@ def main() -> int:
             done.add(el.get("name"))
 
     todo = []
-    for el in ET.parse(UPSTREAM).getroot().iter("string"):
+    for el in ET.parse(upstream).getroot().iter("string"):
         if el.get("translatable") == "false":
             continue
         if el.get("name") not in done:

@@ -53,7 +53,7 @@ CI-ის ადაპტაცია + ჩვენი overlay + ჩვენ�
 - Splash + launcher + **adaptive icon** (API 26+)
 - Design tokens (`dhgm_design.xml`) + DroneHub ფერთა პალიტრა
 - **Noto Sans Georgian** (`values-ka/styles.xml` + `res/font/`)
-- ქართული overlay **~620** სტრინგი (ბლოკები 1–12; დარჩენილი upstream ინკრემენტულად)
+- ქართული overlay **4015** სტრინგი (სრული upstream values/strings.xml)
 - `applicationId` `ge.dronehub.dhgm`, signing, EULA auto-key
 
 **Release:** `git tag v0.1.0 && git push origin v0.1.0` → CI აწყობს APK-ს და ქმნის GitHub Release-ს.
