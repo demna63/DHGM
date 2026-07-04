@@ -7,10 +7,10 @@ cd "$(dirname "$0")/.."
 
 [ -d atak/atak ] || { echo "✗ atak/ არ არის დაკლონილი — ჯერ tools/bootstrap-atak.sh"; exit 1; }
 
-echo "== 1/5: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
+echo "== 1/6: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
 rsync -a --out-format="  + %n" custom/overlay/atak/ atak/atak/
 
-echo "== 2/5: branding (app label ATAK → DHGM) =="
+echo "== 2/6: branding (app label ATAK → DHGM) =="
 STRINGS=atak/atak/ATAK/app/src/main/res/values/strings.xml
 if grep -q '<string name="app_name" translatable="false">ATAK</string>' "$STRINGS"; then
   sed -i '' 's|<string name="app_name" translatable="false">ATAK</string>|<string name="app_name" translatable="false">DHGM</string>|' "$STRINGS" 2>/dev/null \
@@ -22,7 +22,7 @@ else
   echo "  ⚠ app_name-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე ხელით: $STRINGS"
 fi
 
-echo "== 3/5: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
+echo "== 3/6: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
 GRADLE=atak/atak/ATAK/app/build.gradle
 if grep -q "'\"DEVELOPER BUILD\"'" "$GRADLE"; then
   sed -i '' "s|'\"DEVELOPER BUILD\"'|'\"\"'|" "$GRADLE" 2>/dev/null \
@@ -34,7 +34,7 @@ else
   echo "  ⚠ DEV_BANNER-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე: $GRADLE"
 fi
 
-echo "== 4/5: package identity (applicationId + APK სახელი) =="
+echo "== 4/6: package identity (applicationId + APK სახელი) =="
 if grep -q 'applicationId = "com.atakmap.app"' "$GRADLE"; then
   sed -i '' 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE" 2>/dev/null \
     || sed -i 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE"
@@ -58,7 +58,7 @@ elif grep -q 'setProperty("archivesBaseName", "DHGM-"' "$GRADLE"; then
   echo "  ✓ archivesBaseName უკვე DHGM-ია"
 fi
 
-echo "== 5/5: სისტემური ზოლების ფერი (status/navigation bar) =="
+echo "== 5/6: სისტემური ზოლების ფერი (status/navigation bar) =="
 STYLES=atak/atak/ATAK/app/src/main/res/values/styles.xml
 if [ -f "$STYLES" ] && ! grep -q 'android:statusBarColor' "$STYLES"; then
   sed -i '' 's|android:navigationBarColor">@android:color/black|android:navigationBarColor">@color/darker_gray|g' "$STYLES" 2>/dev/null \
@@ -71,5 +71,35 @@ if [ -f "$STYLES" ] && ! grep -q 'android:statusBarColor' "$STYLES"; then
 elif [ -f "$STYLES" ] && grep -q 'android:statusBarColor' "$STYLES"; then
   echo "  ✓ statusBarColor უკვე დაყენებულია"
 fi
+
+echo "== 6/6: encryption passphrase auto-key (first-run დიალოგის მოხსნა) =="
+DBH=atak/atak/ATAK/app/src/main/java/com/atakmap/app/ATAKDatabaseHelper.java
+python3 - "$DBH" <<'PY'
+import sys
+p = sys.argv[1]
+src = open(p, encoding="utf-8").read()
+needle = "            changeKeyImpl(context, true, ksl);"
+replacement = (
+    "            {\n"
+    "                // DHGM: first-run-ზე passphrase-ს ავტომატურად ვაგენერირებთ —\n"
+    "                // მომხმარებელს დიალოგი აღარ ეკითხება (იგივე save→re-prompt ნაკადი).\n"
+    "                final String dhgmAutoKey = \"DHGM\"\n"
+    "                        + Long.toHexString(System.nanoTime())\n"
+    "                        + Integer.toHexString(new java.util.Random().nextInt());\n"
+    "                AtakAuthenticationDatabase.saveCredentials(\n"
+    "                        AtakAuthenticationCredentials.TYPE_APK_DOWNLOADER,\n"
+    "                        \"com.atakmap.app.v2\", \"atakuser\", dhgmAutoKey, false);\n"
+    "                promptForKey(context, ksl);\n"
+    "            }"
+)
+if "dhgmAutoKey" in src:
+    print("  ✓ auto-key უკვე დადებულია")
+elif needle in src:
+    src = src.replace(needle, replacement, 1)
+    open(p, "w", encoding="utf-8").write(src)
+    print("  ✓ encryption passphrase → auto-key (first-run დიალოგი მოიხსნა)")
+else:
+    print("  ⚠ changeKeyImpl(context, true, ksl) ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე:", p)
+PY
 
 echo "✓ overlay დადებულია"
