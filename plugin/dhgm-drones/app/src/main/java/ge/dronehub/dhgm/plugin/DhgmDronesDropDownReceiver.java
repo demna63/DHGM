@@ -71,7 +71,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
         if (bridgeClient != null) {
             bridgeClient.disconnect();
         }
-        panel.setConnected(true);
+        panel.setConnecting(host + ":" + port);
         bridgeClient = new BridgeTcpClient(host, port, panel::onBridgeLine);
         bridgeClient.connect();
         Log.d(TAG, "connecting to " + host + ":" + port);

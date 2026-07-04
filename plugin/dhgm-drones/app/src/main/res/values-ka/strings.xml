@@ -6,7 +6,7 @@
     <string name="dhgm_bridge_line">Bridge: %1$s</string>
     <string name="dhgm_bridge_connected">დაკავშირებულია · %1$d დრონი</string>
     <string name="dhgm_bridge_waiting">დაკავშირებულია · ველოდები ტელემეტრიას…</string>
-    <string name="dhgm_no_drones">დრონები არ არის. გაუშვი bridge:\npython3 dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550</string>
+    <string name="dhgm_no_drones">დრონები არ არის. გაუშვი bridge:\npython3 dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550</string>
     <string name="dhgm_card_altspeed">სიმაღლე %1$s · სიჩქარე %2$.1f მ/წმ · კურსი %3$.0f°</string>
     <string name="dhgm_card_modegps">%1$s · GPS %2$s%3$s</string>
     <string name="dhgm_batt_unknown">—</string>

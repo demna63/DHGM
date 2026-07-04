@@ -75,6 +75,18 @@ public class DronePanel {
         });
     }
 
+    /** მყისიერი უკუკავშირი „დაკავშირება" ღილაკზე — ვუკავშირდები host:port…. */
+    public void setConnecting(final String hostPort) {
+        panelView.post(() -> {
+            drones.clear();
+            listView.removeAllViews();
+            cards.clear();
+            showEmpty(true);
+            statusView.setText(pluginContext.getString(R.string.dhgm_connecting, hostPort));
+            statusView.setTextColor(C_WARN);
+        });
+    }
+
     private void handle(JSONObject o) {
         String type = o.optString("type");
         switch (type) {
