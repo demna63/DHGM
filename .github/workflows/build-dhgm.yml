@@ -15,7 +15,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', '.github/workflows/build-dhgm.yml']
+    tags: ['v*']
+    paths: ['custom/**', 'tools/apply-dhgm-overlay.sh', 'tools/gen-icons.py', '.github/workflows/build-dhgm.yml', 'VERSION']
 
 env:
   ATAK_REF: "4.6.0.5"   # ATAK-CIV-ის pinned stable tag (default branch = main; გაზარდე შეგნებულად, ტესტით)
@@ -25,6 +26,8 @@ jobs:
     name: Assemble DHGM (CIV base)
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    permissions:
+      contents: write
     defaults:
       run:
         shell: bash
@@ -55,6 +58,17 @@ jobs:
 
       - name: Apply DHGM overlay
         run: ./tools/apply-dhgm-overlay.sh
+
+      - name: Read DHGM version
+        id: ver
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            V="${GITHUB_REF#refs/tags/v}"
+          else
+            V="$(tr -d '[:space:]' < VERSION)"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "DHGM version: $V"
 
       - name: Set up Python 3.10 (conan 1.59 + PyYAML wheels)
         uses: actions/setup-python@v5
@@ -173,5 +187,15 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DHGM-civ-sdk
+          name: DHGM-${{ steps.ver.outputs.version }}-civ-sdk
           path: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
+
+      - name: Create GitHub Release (tag push only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DHGM v${{ steps.ver.outputs.version }}
+          files: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
