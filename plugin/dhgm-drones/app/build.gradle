@@ -9,25 +9,41 @@ buildscript {
     ext.ATAK_VERSION = "4.6.0.5"
 
     def takdevVersion = '2.+'
-    def getValueFromPropertiesFile = { propFile, key ->
+    ext.getValueFromPropertiesFile = { propFile, key ->
         if (!propFile.isFile() || !propFile.canRead()) return null
         def prop = new Properties()
         propFile.withReader { prop.load(it) }
         return prop.get(key)
     }
     def getProperty = { name, defValue ->
-        def val = getValueFromPropertiesFile(project.rootProject.file('local.properties'), name)
-        return val != null ? val : (project.properties[name] ?: defValue)
+        def prop = project.properties[name] ?:
+                getValueFromPropertiesFile(project.rootProject.file('local.properties'), name)
+        return (null == prop) ? defValue : prop
     }
-    ext.getValueFromPropertiesFile = getValueFromPropertiesFile
+    def urlKey = 'takrepo.url'
+
+    // ლოკალურ jar-ს ვიყენებთ (takrepo.url არ არის დაყენებული) → isDevKitEnabled=false
+    ext.isDevKitEnabled = { -> getProperty(urlKey, null) != null }
+    ext.takrepoUrl = getProperty(urlKey, 'http://localhost/')
+    ext.takrepoUser = getProperty('takrepo.user', 'invalid')
+    ext.takrepoPassword = getProperty('takrepo.password', 'invalid')
     ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak/atak-gradle-takdev.jar")
 
     repositories {
         google(); mavenCentral(); mavenLocal()
+        maven { url "https://jitpack.io" }
+        maven {
+            url = takrepoUrl
+            credentials { username = takrepoUser; password = takrepoPassword }
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
-        classpath files(takdevPlugin)
+        if (isDevKitEnabled()) {
+            classpath "com.atakmap.gradle:atak-gradle-takdev:${takdevVersion}"
+        } else {
+            classpath files(takdevPlugin)
+        }
     }
 }
 
