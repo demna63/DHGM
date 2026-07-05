@@ -43,7 +43,7 @@ ICON_NAMES = ("ic_atak_launcher.png", "ic_mil_atak_launcher.png")
 SPLASH_NAMES = ("atak_splash.png",)
 SPLASH_PORTRAIT_NAMES = ("atak_splash_portrait.png",)
 
-# Adaptive icon foreground (108dp canvas; logo ~72% for safe zone)
+# Adaptive icon foreground (108dp canvas; logo ~62% — Android safe zone ⌀66dp/108dp)
 FOREGROUND_DENSITIES = {
     "mdpi": 108,
     "hdpi": 162,
@@ -85,11 +85,11 @@ def gen_launcher_icons() -> None:
 
 
 def gen_adaptive_foreground() -> None:
-    """Adaptive icon foreground — ლოგო safe zone-ში (~72%)."""
+    """Adaptive icon foreground — ლოგო safe zone-ში (~62%; ⌀66/108 masking guard)."""
     if not LOGO_SVG.is_file():
         raise FileNotFoundError(LOGO_SVG)
     for density, canvas in FOREGROUND_DENSITIES.items():
-        logo = int(canvas * 0.72)
+        logo = int(canvas * 0.62)
         data = _png_bytes(LOGO_SVG, logo, logo)
         outdir = OUT / f"drawable-{density}"
         _write_png(outdir / FOREGROUND_NAME, data)

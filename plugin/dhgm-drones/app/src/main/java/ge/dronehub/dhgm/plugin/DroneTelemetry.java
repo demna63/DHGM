@@ -56,8 +56,16 @@ public class DroneTelemetry {
         return 0;
     }
 
-    /** ხაზი ძველია? (bridge stale window-ის ანალოგი — 5 წმ). */
+    /** stale window (ms) — ერთიანი კონფიგურაცია (bridge stale window-ის ანალოგი). */
+    public static final long STALE_MS = 5000L;
+
+    /** ხაზი ძველია? (default {@link #STALE_MS}). */
     public boolean isStale(long nowMs) {
-        return nowMs - rxAtMs > 5000;
+        return isStale(nowMs, STALE_MS);
+    }
+
+    /** ხაზი ძველია მოცემულ ზღვართან? */
+    public boolean isStale(long nowMs, long thresholdMs) {
+        return nowMs - rxAtMs > thresholdMs;
     }
 }

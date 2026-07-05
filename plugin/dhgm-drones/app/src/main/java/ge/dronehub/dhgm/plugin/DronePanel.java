@@ -28,11 +28,11 @@ public class DronePanel {
 
     private static final String TAG = "DhgmDronePanel";
 
-    // DroneHub პალიტრა
-    private static final int C_OK = 0xFF30D158;       // მწვანე
-    private static final int C_WARN = 0xFFFF9F0A;     // ნარინჯისფერი
-    private static final int C_CRIT = 0xFFFF453A;     // წითელი
-    private static final int C_MUTED = 0xFF9AA6B8;    // ნაცრისფერი (stale/უცნობი)
+    // DroneHub პალიტრა — colors.xml-იდან იტვირთება (single source; plugin-ს androidx არ აქვს → Resources.getColor).
+    private final int C_OK;     // dhgm_accent_green
+    private final int C_WARN;   // dhgm_warning (ნარინჯისფერი)
+    private final int C_CRIT;   // dhgm_danger (წითელი)
+    private final int C_MUTED;  // dhgm_text_disabled (stale/უცნობი)
 
     private static final long STALE_TICK_MS = 2000L;
 
@@ -67,8 +67,14 @@ public class DronePanel {
         }
     };
 
+    @SuppressWarnings("deprecation")
     public DronePanel(Context pluginContext, View panelView, MapView mapView) {
         this.pluginContext = pluginContext;
+        android.content.res.Resources res = pluginContext.getResources();
+        this.C_OK = res.getColor(R.color.dhgm_accent_green);
+        this.C_WARN = res.getColor(R.color.dhgm_warning);
+        this.C_CRIT = res.getColor(R.color.dhgm_danger);
+        this.C_MUTED = res.getColor(R.color.dhgm_text_disabled);
         this.panelView = panelView;
         this.mapView = mapView;
         this.statusView = panelView.findViewById(R.id.dhgm_bridge_status);
@@ -77,7 +83,7 @@ public class DronePanel {
         this.emptyView.setTextColor(C_MUTED);
         this.emptyView.setTextSize(13);
         this.emptyView.setText(pluginContext.getString(R.string.dhgm_no_drones));
-        this.trails = new DroneTrails(mapView);
+        this.trails = new DroneTrails(pluginContext, mapView);
         showEmpty(true);
     }
 
