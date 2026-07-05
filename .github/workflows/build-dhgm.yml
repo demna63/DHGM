@@ -144,17 +144,14 @@ jobs:
         working-directory: atak
         run: |
           export PATH="$CMAKE_HOME/bin:$PATH"
-          HAVE_LIBS=0; HAVE_CONAN=0
+          HAVE_LIBS=0
           ls takthirdparty/builds/android-arm64-v8a-release/lib/libgdal* >/dev/null 2>&1 && HAVE_LIBS=1
-          # conan packages (gradle-ს სჭირდება): ≥5 პაკეტი data/-ში = სრული cache
-          if [ -d "$HOME/.conan/data" ] && [ "$(ls -1 "$HOME/.conan/data" 2>/dev/null | wc -l)" -ge 5 ]; then HAVE_CONAN=1; fi
 
-          if [ "$HAVE_LIBS" = 1 ] && [ "$HAVE_CONAN" = 1 ]; then
-            # სრული cache-hit → prebuild საერთოდ გამოტოვდება (native libs + conan packages მზადაა)
-            echo "FULL cache hit — prebuild.sh გამოტოვდა (native + conan cached)"
-          elif [ "$HAVE_LIBS" = 1 ]; then
-            # ნაწილობრივი: native libs არის, conan არ არის → make გამოვტოვოთ (touch), prebuild-ი conan-ს ხელახლა გამოაქვეყნებს
-            echo "partial cache — native libs touch, make გამოტოვდება, conan republish"
+          if [ "$HAVE_LIBS" = 1 ]; then
+            # native libs cached → make გამოვტოვოთ (touch), მაგრამ prebuild.sh მაინც საჭიროა:
+            # conan export-pkg + publishToMavenLocal (~/.m2). ~/.m2 CI cache-ში არ ინახება —
+            # სრული skip → gradle localhost:80-ზე ეცემა (libLAS/takthirdparty pom).
+            echo "native cache hit — make გამოტოვდება, conan+maven republish"
             sed -i '/# Make the third party parts in parallel/i find ../takthirdparty/builds -print0 2>/dev/null | xargs -0 touch 2>/dev/null || true' scripts/prebuild.sh
             ./scripts/prebuild.sh
           else
