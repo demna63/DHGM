@@ -212,9 +212,11 @@ public class DronePanel {
         }
     }
 
-    /** CoT მარკერს (uid DHGM.&lt;sysid&gt;) DroneHub top-down ხატულას ადებს და heading-ზე აბრუნებს.
-     *  მარკერს GCS-ის CoT ქმნის; აქ მხოლოდ იკონა/სტილი გადავაწერთ (no-hard-fork).
-     *  ყოველ update-ზე ხელახლა ედება — CoT-ის refresh-მა default 2525 იკონა რომ არ დააბრუნოს. */
+    /** CoT მარკერს (uid DHGM.&lt;sysid&gt;) DroneHub chevron ხატულას ადებს და heading-ზე აბრუნებს.
+     *  მარკერს GCS-ის CoT ქმნის; აქ იკონა/სტილს გადავაწერთ (no-hard-fork) და
+     *  adapt_marker_icon=false-ს ვდებთ — ATAK-ის IconsMapAdapter CoT-refresh-ზე
+     *  default 2525 იკონას რომ აღარ დააბრუნოს (flicker fix). იდემპოტენტური: მხოლოდ
+     *  მაშინ ვამუშავებთ, როცა ფლაგი ჯერ არ დაგვიყენებია (ან CoT-მ მარკერი ხელახლა შექმნა). */
     private void styleMarker(DroneTelemetry t) {
         try {
             if (mapView == null) return;
@@ -222,19 +224,23 @@ public class DronePanel {
                     mapView.getRootGroup().deepFindUID("DHGM." + t.sysid);
             if (!(mi instanceof com.atakmap.android.maps.Marker)) return;
             com.atakmap.android.maps.Marker m = (com.atakmap.android.maps.Marker) mi;
-            if (droneIcon == null) {
-                String uri = "android.resource://" + pluginContext.getPackageName()
-                        + "/" + R.drawable.ic_drone_marker;
-                droneIcon = new com.atakmap.coremap.maps.assets.Icon.Builder()
-                        .setImageUri(com.atakmap.coremap.maps.assets.Icon.STATE_DEFAULT, uri)
-                        .setAnchor(com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER,
-                                   com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER)
-                        .build();
+            // adapt_marker_icon default = true → ჯერ არ დაგვიმუშავებია (ან ახალი მარკერია).
+            if (m.getMetaBoolean("adapt_marker_icon", true)) {
+                if (droneIcon == null) {
+                    String uri = "android.resource://" + pluginContext.getPackageName()
+                            + "/" + R.drawable.ic_drone_marker;
+                    droneIcon = new com.atakmap.coremap.maps.assets.Icon.Builder()
+                            .setImageUri(com.atakmap.coremap.maps.assets.Icon.STATE_DEFAULT, uri)
+                            .setAnchor(com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER,
+                                       com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER)
+                            .build();
+                }
+                m.setMetaBoolean("adapt_marker_icon", false); // CoT-refresh აღარ გადააფარებს 2525-ს
+                m.setIcon(droneIcon);
+                m.setStyle(m.getStyle()
+                        | com.atakmap.android.maps.Marker.STYLE_ROTATE_HEADING_NOARROW_MASK
+                        | com.atakmap.android.maps.Marker.STYLE_SMOOTH_ROTATION_MASK);
             }
-            m.setIcon(droneIcon);
-            m.setStyle(m.getStyle()
-                    | com.atakmap.android.maps.Marker.STYLE_ROTATE_HEADING_NOARROW_MASK
-                    | com.atakmap.android.maps.Marker.STYLE_SMOOTH_ROTATION_MASK);
             m.setTrack(t.courseDeg, t.speedMps);
         } catch (Exception e) {
             Log.w(TAG, "styleMarker failed: " + e.getMessage());
