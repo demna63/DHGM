@@ -258,7 +258,7 @@ jobs:
         working-directory: plugin/dhgm-drones
         run: |
           chmod +x gradlew || true
-          ./gradlew assembleCivRelease --stacktrace
+          ./gradlew assembleCivRelease -PdhgmVersion=${{ steps.ver.outputs.version }} --stacktrace
 
       - name: Upload plugin APK
         if: steps.pluginbuild.outcome == 'success'
@@ -267,14 +267,33 @@ jobs:
           name: DHGM-Drones-plugin-${{ steps.ver.outputs.version }}
           path: plugin/dhgm-drones/app/build/outputs/apk/**/*.apk
 
+      # release asset-ებს სუფთა, ვერსიით სახელი დაერქვას (gradle-ის ნედლი
+      # DHGM-4.6.0.5-<hash>-civ-sdk.apk → DHGM-<ver>-app.apk).
+      - name: Stage release assets (clean names)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          mkdir -p dist
+          APP=$(find atak/atak/ATAK/app/build/outputs/apk -name "*.apk" | head -1)
+          if [ -n "$APP" ]; then
+            cp "$APP" "dist/DHGM-${{ steps.ver.outputs.version }}-app.apk"
+          else
+            echo "::error::app APK ვერ მოიძებნა"; exit 1
+          fi
+          PLUG=$(find plugin/dhgm-drones/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
+          if [ -n "$PLUG" ]; then
+            cp "$PLUG" "dist/DHGM-Drones-${{ steps.ver.outputs.version }}.apk"
+          else
+            echo "::warning::plugin APK ვერ მოიძებნა — release app-ის გარეშე გამოვა"
+          fi
+          ls -la dist
+
       - name: Create GitHub Release (tag push only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: DHGM v${{ steps.ver.outputs.version }}
           files: |
-            atak/atak/ATAK/app/build/outputs/apk/**/*.apk
-            plugin/dhgm-drones/app/build/outputs/apk/**/*.apk
+            dist/*.apk
           generate_release_notes: true
           body: |
             # DHGM v${{ steps.ver.outputs.version }} — DroneHub Georgia Map
@@ -282,8 +301,8 @@ jobs:
             ATAK-CIV-ის ბაზაზე, ქართული ლოკალიზაციით + DroneHub GCS ტელემეტრია.
 
             ## ინსტალაცია
-            1. **app** (`DHGM-*-app.apk` / `*-civ-sdk.apk`) — ძველი ATAK/DHGM ჯერ წაშალე.
-            2. **plugin** (`DHGM-Drones-*.apk`) — Plugin Management-ში „დრონები" ჩართე.
+            1. **app** (`DHGM-${{ steps.ver.outputs.version }}-app.apk`) — ძველი ATAK/DHGM ჯერ წაშალე.
+            2. **plugin** (`DHGM-Drones-${{ steps.ver.outputs.version }}.apk`) — Plugin Management-ში „დრონები" ჩართე.
             3. bridge: `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550`
 
             იხ. [docs/usage.md](https://github.com/demna63/DHGM/blob/main/docs/usage.md).
