@@ -271,7 +271,22 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: DHGM v${{ steps.ver.outputs.version }}
-          files: atak/atak/ATAK/app/build/outputs/apk/**/*.apk
+          files: |
+            atak/atak/ATAK/app/build/outputs/apk/**/*.apk
+            plugin/dhgm-drones/app/build/outputs/apk/**/*.apk
           generate_release_notes: true
+          body: |
+            # DHGM v${{ steps.ver.outputs.version }} — DroneHub Georgia Map
+
+            ATAK-CIV-ის ბაზაზე, ქართული ლოკალიზაციით + DroneHub GCS ტელემეტრია.
+
+            ## ინსტალაცია
+            1. **app** (`DHGM-*-app.apk` / `*-civ-sdk.apk`) — ძველი ATAK/DHGM ჯერ წაშალე.
+            2. **plugin** (`DHGM-Drones-*.apk`) — Plugin Management-ში „დრონები" ჩართე.
+            3. bridge: `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550`
+
+            იხ. [docs/usage.md](https://github.com/demna63/DHGM/blob/main/docs/usage.md).
+
+            ⚠️ APK-ები ჩვენი self-signed key-ითაა — Play Protect შეიძლება გააფრთხილოს („Install anyway").
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
