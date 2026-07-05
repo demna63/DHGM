@@ -1,6 +1,6 @@
 # DHGM — გამოყენების გზამკვლევი
 
-პრაქტიკული ინსტრუქციები: bridge, app, plugin, დრონის ცოცხალი ჩვენება.
+პრაქტიკული ინსტრუქციები: GCS-თან დაკავშირება, bridge, app, plugin, დრონის ცოცხალი ჩვენება.
 
 ## 1. კომპონენტები
 
@@ -12,6 +12,10 @@
 
 app + plugin **ერთი signing key-ითაა** — plugin მხოლოდ DHGM-ზე ჩაიტვირთება.
 
+> **GCS native (რეკომენდებული):** DroneHub-GCS-ს ჩაშენებული DHGM გამოსავალი აქვს
+> (Settings → ტელემეტრია → **DHGM / ATAK**) — რეალურ ფრენაზე `dhgm-bridge` **აღარ სჭირდება**
+> (იხ. §3). bridge რჩება სიმულაციისა და ტესტისთვის (§4).
+
 ## 2. ინსტალაცია (ტაბლეტი)
 
 1. **DHGM app** — `DHGM-*-app.apk` (ძველი ATAK/DHGM ჯერ წაშალე; package `ge.dronehub.dhgm`).
@@ -19,7 +23,37 @@ app + plugin **ერთი signing key-ითაა** — plugin მხოლ�
 2. **Plugin** — `DHGM-Drones-plugin-*.apk` → Plugin Management-ში „დრონები" ჩართე.
    - Compatible უნდა იყოს (მწვანე ✓). Incompatible → plugin-api ვერსია არ ემთხვევა.
 
-## 3. bridge — გაშვების რეჟიმები (Mac)
+## 3. GCS-თან დაკავშირება (native — bridge-გარეშე) ★
+
+რეალური ფრენა DroneHub-GCS-იდან: GCS პირდაპირ აგზავნის CoT-ს (რუკა) და JSON-ს (პანელი).
+
+**პირობა:** Mac (GCS) და ტაბლეტი (DHGM) **ერთ Wi-Fi/subnet-ზე**; router-ზე
+**AP/Client Isolation გამორთული** — თორემ multicast ტელეფონამდე ვერ მიაღწევს.
+
+| არხი | დანიშნულება | GCS პარამეტრი |
+|------|-------------|---------------|
+| CoT multicast `239.2.3.1:6969` (UDP) | დრონი **რუკაზე** | „DHGM-ზე გადაცემა" ჩართული |
+| Plugin TCP `14550` | დრონის **პანელი** | „Plugin TCP პორტი" = 14550 |
+
+1. **Mac-ის IP:** `ipconfig getifaddr en0` (Wi-Fi; ცარიელი → `en1`). მაგ.: `192.168.1.243`.
+2. **GCS:** Settings → ტელემეტრია → **DHGM / ATAK** → `DHGM-ზე გადაცემა` ჩართე;
+   CoT `239.2.3.1:6969`, Plugin TCP `14550`. სიხშირე **2–5 Hz** გლუვი მოძრაობისთვის.
+   (MAVLink forwarding `14445` native-რეჟიმში საჭირო აღარაა.)
+3. **რუკა (ავტომატური):** DHGM default-ად უსმენს `239.2.3.1:6969`-ს → GCS-ის ჩართვისთანავე
+   დრონი გამოჩნდება (`DH-<sysid>`, ლურჯი friendly UAV). დასაყენებელი არაფერია.
+4. **პანელი:** toolbar → დრონის ხატულა → host = `<Mac-IP>:14550` → **დაკავშირება**.
+5. **Mac firewall:** პირველ დაკავშირებაზე DroneHubGCS-ს → **Allow incoming**
+   (System Settings → Network → Firewall → Options).
+
+**Troubleshooting:**
+- რუკაზე დრონი არ ჩანს → multicast იბლოკება: AP isolation, VPN, ან სხვადასხვა subnet.
+- პანელი ვერ უერთდება → Mac IP / firewall / პორტი; ტაბლეტიდან `ping <Mac-IP>` შეამოწმე.
+- მოძრაობა „ხტუნავს" → GCS სიხშირე 1 Hz-ია; ↑ 2–5 Hz.
+
+## 4. bridge — სიმულაცია / ტესტი (Mac)
+
+bridge რეალურ ფრენას აღარ სჭირდება (§3). გამოიყენე **სიმულირებული დრონისთვის**, ან თუ
+GCS native-გამოსავალი მიუწვდომელია.
 
 ```bash
 cd ~/Desktop/DHGM/bridge
@@ -42,21 +76,21 @@ python3 dhgm_bridge.py --sim --dry-run --max-ticks 3
 
 პორტი დაკავებულია (`Address already in use`)? → `pkill -f dhgm_bridge.py`.
 
-## 4. პანელში დრონის ნახვა
+## 5. პანელში დრონის ნახვა
 
-1. Mac-ზე გაუშვი bridge `--plugin-tcp 0.0.0.0:14550`-ით.
+1. წყარო გაუშვი: **GCS native** (§3) ან **bridge** `--plugin-tcp 0.0.0.0:14550`-ით (§4).
 2. ტაბლეტზე: toolbar → დრონის ხატულა → პანელი.
 3. host ველში Mac-ის IP: `192.168.1.243:14550` → **დაკავშირება** (firewall → Allow).
 4. დრონის ბარათი: **tap** → რუკა ცენტრდება; **მეორე tap** → follow (`▶`, რუკა მიჰყვება).
 
-## 5. ცნობილი დეტალები
+## 6. ცნობილი დეტალები
 
 - **Map lag pan/zoom-ზე** — ATAK breadcrumb trail მოძრავ დრონზე. გამორთვა:
   Settings → Display Preferences → Bread Crumb Preferences.
 - **სიჩქარე MPH-ში** — Settings → Units → m/s ან km/h.
 - **„NO GPS" წითელი** — ტაბლეტის location გამორთულია (მოსალოდნელი, დრონს არ უშლის).
 
-## 6. Build (დეველოპერებისთვის)
+## 7. Build (დეველოპერებისთვის)
 
 APK იწყობა GitHub Actions-ზე (`.github/workflows/build-dhgm.yml`) — იხ. [CLAUDE.md](../CLAUDE.md).
 ლოკალურად ხელახლა მოაწერე install-მდე:

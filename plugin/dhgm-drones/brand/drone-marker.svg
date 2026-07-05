@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DroneHub GCS — map track symbol (tactical chevron + SA ring), 96×96, centered.
+  0° = chevron toward north (up). ATAK: Icon ANCHOR_CENTER + STYLE_ROTATE_HEADING → track pivots on ring center.
+  Colors: Theme.qml brandPrimary #0A84FF, brandAccent #30D158, bgBase #0B0E14.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none" role="img" aria-label="Drone track">
+  <title>Drone track</title>
+  <g transform="translate(48 48)">
+    <!-- SA ring: dark halo (satellite contrast) + brand ring -->
+    <circle r="30" fill="none" stroke="#000000" stroke-opacity="0.45" stroke-width="4.5"/>
+    <circle r="30" fill="none" stroke="#0A84FF" stroke-opacity="0.55" stroke-width="2"/>
+    <!-- chevron halo -->
+    <path d="M0 -27 L15 14 L0 4 L-15 14 Z" fill="#0B0E14" stroke="#000000" stroke-opacity="0.5"
+          stroke-width="5" stroke-linejoin="round"/>
+    <!-- chevron body -->
+    <path d="M0 -27 L15 14 L0 4 L-15 14 Z" fill="#0A84FF" stroke="#FFFFFF" stroke-width="2.2"
+          stroke-linejoin="round"/>
+    <!-- nose tick (forward) -->
+    <circle cx="0" cy="-15" r="2.4" fill="#FFFFFF"/>
+  </g>
+</svg>
