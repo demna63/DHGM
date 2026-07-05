@@ -52,6 +52,7 @@ public class DronePanel {
 
     private int followSysid = -1;  // -1 = follow გამორთული
     private boolean ticking = false;
+    private final DroneTrails trails;
 
     private final Runnable staleTicker = new Runnable() {
         @Override
@@ -75,6 +76,7 @@ public class DronePanel {
         this.emptyView.setTextColor(C_MUTED);
         this.emptyView.setTextSize(13);
         this.emptyView.setText(pluginContext.getString(R.string.dhgm_no_drones));
+        this.trails = new DroneTrails(mapView);
         showEmpty(true);
     }
 
@@ -98,6 +100,7 @@ public class DronePanel {
                 drones.clear();
                 listView.removeAllViews();
                 cards.clear();
+                trails.clearAll();
                 showEmpty(true);
                 statusView.setText(R.string.dhgm_bridge_disconnected);
                 statusView.setTextColor(C_MUTED);
@@ -114,6 +117,7 @@ public class DronePanel {
             drones.clear();
             listView.removeAllViews();
             cards.clear();
+            trails.clearAll();
             showEmpty(true);
             statusView.setText(pluginContext.getString(R.string.dhgm_connecting, hostPort));
             statusView.setTextColor(C_WARN);
@@ -153,6 +157,7 @@ public class DronePanel {
             showEmpty(false);
         }
         bindCard(card, t);
+        trails.addPoint(t.sysid, t.lat, t.lon);   // კონტროლირებადი breadcrumb trail
         // follow — რუკა მიჰყვება არჩეულ დრონს
         if (t.sysid == followSysid) {
             centerOn(t);
@@ -164,6 +169,7 @@ public class DronePanel {
         View card = cards.remove(sysid);
         if (card != null) listView.removeView(card);
         if (sysid == followSysid) followSysid = -1;
+        trails.remove(sysid);
         if (cards.isEmpty()) showEmpty(true);
     }
 
@@ -180,12 +186,19 @@ public class DronePanel {
         }
     }
 
-    /** რუკა დრონის კოორდინატზე. */
+    /** რუკა დრონზე — უპირატესად CoT მარკერზე (DHGM.&lt;sysid&gt;, პანელ↔რუკა სინქრონი),
+     *  თუ არ არსებობს — TCP-ტელემეტრიის კოორდინატზე. */
     private void centerOn(DroneTelemetry t) {
         try {
-            if (mapView != null) {
-                mapView.getMapController().panTo(new GeoPoint(t.lat, t.lon), true);
+            if (mapView == null) return;
+            GeoPoint target = new GeoPoint(t.lat, t.lon);
+            com.atakmap.android.maps.MapItem mi =
+                    mapView.getRootGroup().deepFindUID("DHGM." + t.sysid);
+            if (mi instanceof com.atakmap.android.maps.PointMapItem) {
+                GeoPoint p = ((com.atakmap.android.maps.PointMapItem) mi).getPoint();
+                if (p != null) target = p;
             }
+            mapView.getMapController().panTo(target, true);
         } catch (Exception e) {
             Log.w(TAG, "panTo failed: " + e.getMessage());
         }
@@ -219,10 +232,11 @@ public class DronePanel {
         altspeed.setText(pluginContext.getString(
                 R.string.dhgm_card_altspeed, alt, t.speedMps, t.courseDeg));
 
-        String sats = t.satellites != null ? " (" + t.satellites + ")" : "";
+        String extra = t.satellites != null ? " (" + t.satellites + ")" : "";
+        if (t.rssiDbm != null) extra += " · RSSI " + t.rssiDbm + "dBm";
         String mode = t.flightMode == null || t.flightMode.isEmpty() ? "—" : t.flightMode;
         String gps = t.gpsFix == null || t.gpsFix.isEmpty() ? "—" : t.gpsFix;
-        modegps.setText(pluginContext.getString(R.string.dhgm_card_modegps, mode, gps, sats));
+        modegps.setText(pluginContext.getString(R.string.dhgm_card_modegps, mode, gps, extra));
 
         // სტატუს-წერტილი: stale → ნაცრისფერი, თორემ მწვანე
         dot.setBackgroundColor(stale ? C_MUTED : C_OK);
