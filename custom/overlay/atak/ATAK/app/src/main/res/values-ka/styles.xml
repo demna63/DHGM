@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DHGM: ქართული ლოკალიზაციისას Noto Sans Georgian (upstream Nunito-ს ნაცვლად). -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="AtakTextAppearance">
+        <item name="android:fontFamily" tools:ignore="NewApi">@font/noto_sans_georgian_regular</item>
+    </style>
+
+    <style name="AtakTextAppearance.Header1">
+        <item name="android:fontFamily" tools:ignore="NewApi">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="AtakTextAppearance.Header2">
+        <item name="android:fontFamily" tools:ignore="NewApi">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="AtakTextAppearance.Header4">
+        <item name="android:fontFamily" tools:ignore="NewApi">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="dialogTitleTextView">
+        <item name="android:fontFamily">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="dialogMessageTextView">
+        <item name="android:fontFamily">@font/noto_sans_georgian_regular</item>
+    </style>
+
+    <style name="dialogTextAppearance">
+        <item name="android:fontFamily">@font/noto_sans_georgian_regular</item>
+    </style>
+
+    <style name="newDialogTitleStyle">
+        <item name="android:fontFamily">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="tabTextAppearance">
+        <item name="android:font" tools:ignore="NewApi">@font/noto_sans_georgian_regular</item>
+    </style>
+
+    <style name="switchTextAppearance">
+        <item name="android:font" tools:ignore="NewApi">@font/noto_sans_georgian_bold</item>
+    </style>
+
+    <style name="listViewItem">
+        <item name="android:font" tools:ignore="NewApi">@font/noto_sans_georgian_regular</item>
+    </style>
+
+    <style name="SelfCoordBarText">
+        <item name="android:fontFamily">@font/noto_sans_georgian_regular</item>
+    </style>
+
+</resources>

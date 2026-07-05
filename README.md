@@ -42,12 +42,21 @@ bridge თითო დრონზე (MAVLink sysid) აგზავნის 
 
 Plugin TCP (ფაზა 2a): `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550`
 
-### ფაზა 1 — DHGM fork (branding + ქართული)
+### ფაზა 1 — DHGM fork (branding + ქართული) ✅
 
 **Build სტრატეგია:** ATAK-ის native ჯაჭვი (NDK r12b, takthirdparty, conan) **Linux-only**-ია —
 macOS-ზე APK ვერ აიწყობა. ამიტომ GCS-ის ანალოგიით: overlay ლოკალურად ვითარდება,
 **APK GitHub Actions-ზე იწყობა** (`.github/workflows/build-dhgm.yml` — ATAK-ის ოფიციალური
 CI-ის ადაპტაცია + ჩვენი overlay + ჩვენი signing).
+
+**ფაზა 1 UI პაკეტი (დასრულებული):**
+- Splash + launcher + **adaptive icon** (API 26+)
+- Design tokens (`dhgm_design.xml`) + DroneHub ფერთა პალიტრა
+- **Noto Sans Georgian** (`values-ka/styles.xml` + `res/font/`)
+- ქართული overlay **4015** სტრინგი (სრული upstream values/strings.xml)
+- `applicationId` `ge.dronehub.dhgm`, signing, EULA auto-key
+
+**Release:** `git tag v0.1.0 && git push origin v0.1.0` → CI აწყობს APK-ს და ქმნის GitHub Release-ს.
 
 ხელსაწყოები:
 - `tools/bootstrap-atak.sh` — ATAK-CIV წყაროს კლონირება `atak/`-ში (gitignored,
