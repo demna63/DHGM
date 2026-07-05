@@ -6,19 +6,36 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-        android:id="@+id/dhgm_panel_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/dhgm_drones_title"
-        android:textColor="@color/dhgm_telemetry"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
+    <!-- header: DroneHub badge + title -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_drone_badge"
+            android:contentDescription="@string/dhgm_drones_title" />
+
+        <TextView
+            android:id="@+id/dhgm_panel_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dhgm_drones_title"
+            android:textColor="@color/dhgm_text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- host + connect -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -27,9 +44,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/bg_host_input"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:hint="@string/dhgm_host_hint"
             android:textColor="@color/dhgm_text_primary"
-            android:textColorHint="@color/dhgm_text_secondary"
+            android:textColorHint="@color/dhgm_text_disabled"
             android:textSize="14sp"
             android:inputType="textNoSuggestions"
             android:maxLines="1" />
@@ -40,8 +62,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/dhgm_connect"
-            android:textColor="@color/dhgm_bg_surface"
-            android:background="@color/dhgm_telemetry" />
+            android:textColor="@color/dhgm_text_primary"
+            android:textAllCaps="false"
+            android:background="@drawable/bg_connect_btn" />
     </LinearLayout>
 
     <TextView
@@ -53,10 +76,16 @@
         android:textColor="@color/dhgm_text_secondary"
         android:textSize="13sp" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/dhgm_divider" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:layout_weight="1">
 
         <LinearLayout

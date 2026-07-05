@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- DroneHub GCS — panel/card header icon (48×48). From DroneHubLogo.svg mark. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none" role="img" aria-label="DroneHub vehicle">
+  <title>DroneHub</title>
+  <g transform="translate(4 6)">
+    <path d="M20 1.5 L35.6 10.5 V28.5 L20 37.5 L4.4 28.5 V10.5 Z"
+          fill="none" stroke="#0A84FF" stroke-width="2.4" stroke-linejoin="round"/>
+    <circle cx="20" cy="19.5" r="3.6" fill="#0A84FF"/>
+    <g stroke="#0A84FF" stroke-width="2.2" stroke-linecap="round">
+      <line x1="20" y1="19.5" x2="11" y2="11"/>
+      <line x1="20" y1="19.5" x2="29" y2="11"/>
+      <line x1="20" y1="19.5" x2="11" y2="28"/>
+      <line x1="20" y1="19.5" x2="29" y2="28"/>
+    </g>
+    <g fill="#151A23" stroke="#0A84FF" stroke-width="1.8">
+      <circle cx="11" cy="11" r="3"/>
+      <circle cx="29" cy="11" r="3"/>
+      <circle cx="11" cy="28" r="3"/>
+      <circle cx="29" cy="28" r="3"/>
+    </g>
+    <circle cx="33.5" cy="6.5" r="3" fill="#30D158"/>
+  </g>
+</svg>

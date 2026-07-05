@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  DroneHub GCS პალიტრა — წყარო: GCS custom/res/Custom/Theme.qml (token-ების ერთადერთი source).
+  სახელები DHGM-plugin-ის, მნიშვნელობები GCS-token-ის იდენტური.
+-->
 <resources>
-    <color name="dhgm_bg_surface">#151A23</color>
-    <color name="dhgm_bg_elevated">#1E2530</color>
-    <color name="dhgm_accent_teal">#17A79A</color>
-    <color name="dhgm_accent_green">#30D158</color>
-    <color name="dhgm_telemetry">#64D2FF</color>
-    <color name="dhgm_text_primary">#D0D8E4</color>
-    <color name="dhgm_text_secondary">#9AA6B8</color>
-    <color name="dhgm_warning">#FF453A</color>
+    <!-- ფონები -->
+    <color name="dhgm_bg_base">#0B0E14</color>      <!-- bgBase -->
+    <color name="dhgm_bg_surface">#151A23</color>   <!-- bgSurface (პანელი) -->
+    <color name="dhgm_bg_elevated">#1E2530</color>  <!-- bgElevated (ბარათი) -->
+    <color name="dhgm_divider">#2A323F</color>      <!-- divider -->
+
+    <!-- აქცენტები -->
+    <color name="dhgm_accent_blue">#0A84FF</color>  <!-- brandPrimary / CTA -->
+    <color name="dhgm_accent_green">#30D158</color> <!-- brandAccent / safeOk -->
+    <color name="dhgm_telemetry">#64D2FF</color>    <!-- telemetryAccent -->
+
+    <!-- სტატუსი -->
+    <color name="dhgm_warning">#FF9F0A</color>      <!-- safeWarn (ბატ. 25–50%, GPS 2D) -->
+    <color name="dhgm_danger">#FF453A</color>       <!-- safeCrit (ბატ. <25%, comm lost) -->
+
+    <!-- ტექსტი -->
+    <color name="dhgm_text_primary">#FFFFFF</color>   <!-- textPrimary -->
+    <color name="dhgm_text_secondary">#D0D8E4</color> <!-- textSecondary -->
+    <color name="dhgm_text_disabled">#9AA6B8</color>  <!-- textDisabled (stale/no-data) -->
 </resources>

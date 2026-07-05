@@ -33,8 +33,6 @@ public class DronePanel {
     private static final int C_WARN = 0xFFFF9F0A;     // ნარინჯისფერი
     private static final int C_CRIT = 0xFFFF453A;     // წითელი
     private static final int C_MUTED = 0xFF9AA6B8;    // ნაცრისფერი (stale/უცნობი)
-    private static final int C_CARD = 0xFF1E2530;     // ბარათის ფონი
-    private static final int C_CARD_FOLLOW = 0xFF17A79A; // follow-ის აქცენტი (teal)
 
     private static final long STALE_TICK_MS = 2000L;
 
@@ -53,6 +51,9 @@ public class DronePanel {
     private int followSysid = -1;  // -1 = follow გამორთული
     private boolean ticking = false;
     private final DroneTrails trails;
+
+    // DroneHub top-down მარკერის ხატულა — ერთხელ იგება, ყველა დრონისთვის საერთო.
+    private com.atakmap.coremap.maps.assets.Icon droneIcon;
 
     private final Runnable staleTicker = new Runnable() {
         @Override
@@ -157,6 +158,7 @@ public class DronePanel {
             showEmpty(false);
         }
         bindCard(card, t);
+        styleMarker(t);                           // CoT მარკერს DroneHub ხატულა + heading
         trails.addPoint(t.sysid, t.lat, t.lon);   // კონტროლირებადი breadcrumb trail
         // follow — რუკა მიჰყვება არჩეულ დრონს
         if (t.sysid == followSysid) {
@@ -204,6 +206,35 @@ public class DronePanel {
         }
     }
 
+    /** CoT მარკერს (uid DHGM.&lt;sysid&gt;) DroneHub top-down ხატულას ადებს და heading-ზე აბრუნებს.
+     *  მარკერს GCS-ის CoT ქმნის; აქ მხოლოდ იკონა/სტილი გადავაწერთ (no-hard-fork).
+     *  ყოველ update-ზე ხელახლა ედება — CoT-ის refresh-მა default 2525 იკონა რომ არ დააბრუნოს. */
+    private void styleMarker(DroneTelemetry t) {
+        try {
+            if (mapView == null) return;
+            com.atakmap.android.maps.MapItem mi =
+                    mapView.getRootGroup().deepFindUID("DHGM." + t.sysid);
+            if (!(mi instanceof com.atakmap.android.maps.Marker)) return;
+            com.atakmap.android.maps.Marker m = (com.atakmap.android.maps.Marker) mi;
+            if (droneIcon == null) {
+                String uri = "android.resource://" + pluginContext.getPackageName()
+                        + "/" + R.drawable.ic_drone_marker;
+                droneIcon = new com.atakmap.coremap.maps.assets.Icon.Builder()
+                        .setImageUri(com.atakmap.coremap.maps.assets.Icon.STATE_DEFAULT, uri)
+                        .setAnchor(com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER,
+                                   com.atakmap.coremap.maps.assets.Icon.ANCHOR_CENTER)
+                        .build();
+            }
+            m.setIcon(droneIcon);
+            m.setStyle(m.getStyle()
+                    | com.atakmap.android.maps.Marker.STYLE_ROTATE_HEADING_NOARROW_MASK
+                    | com.atakmap.android.maps.Marker.STYLE_SMOOTH_ROTATION_MASK);
+            m.setTrack(t.courseDeg, t.speedMps);
+        } catch (Exception e) {
+            Log.w(TAG, "styleMarker failed: " + e.getMessage());
+        }
+    }
+
     private void bindCard(View card, DroneTelemetry t) {
         TextView callsign = card.findViewById(R.id.dhgm_card_callsign);
         TextView battery = card.findViewById(R.id.dhgm_card_battery);
@@ -215,7 +246,7 @@ public class DronePanel {
         boolean stale = t.isStale(System.currentTimeMillis());
 
         callsign.setText(followed ? "▶ " + t.callsign : t.callsign);
-        card.setBackgroundColor(followed ? C_CARD_FOLLOW : C_CARD);
+        card.setBackgroundResource(followed ? R.drawable.bg_card_follow : R.drawable.bg_card);
 
         // ბატარეა + ფერი
         if (t.batteryPct != null) {
@@ -238,8 +269,14 @@ public class DronePanel {
         String gps = t.gpsFix == null || t.gpsFix.isEmpty() ? "—" : t.gpsFix;
         modegps.setText(pluginContext.getString(R.string.dhgm_card_modegps, mode, gps, extra));
 
-        // სტატუს-წერტილი: stale → ნაცრისფერი, თორემ მწვანე
-        dot.setBackgroundColor(stale ? C_MUTED : C_OK);
+        // სტატუს-წერტილი (round oval): stale → ნაცრისფერი, თორემ მწვანე
+        android.graphics.drawable.Drawable dotBg = dot.getBackground();
+        if (dotBg instanceof android.graphics.drawable.GradientDrawable) {
+            ((android.graphics.drawable.GradientDrawable) dotBg.mutate())
+                    .setColor(stale ? C_MUTED : C_OK);
+        } else {
+            dot.setBackgroundColor(stale ? C_MUTED : C_OK);
+        }
     }
 
     private void refreshStatus() {
