@@ -129,11 +129,13 @@ jobs:
           tar xzf cmake.tar.gz
           echo "CMAKE_HOME=$PWD/cmake-3.14.7-Linux-x86_64" >> $GITHUB_ENV
 
-      - name: Restore takthirdparty cache
+      - name: Restore takthirdparty + conan cache
         id: ttp-cache
         uses: actions/cache/restore@v4
         with:
-          path: atak/takthirdparty/builds
+          path: |
+            atak/takthirdparty/builds
+            ~/.conan
           key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-${{ github.run_id }}
           restore-keys: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-
 
@@ -141,18 +143,25 @@ jobs:
         working-directory: atak
         run: |
           export PATH="$CMAKE_HOME/bin:$PATH"
-          # cache-hit → ძვირი make (GDAL/spatialite/assimp, ~50წთ) გამოტოვება:
-          # prebuild.sh-ში, tarball extraction-ის შემდეგ და make-ს წინ, ვამატებთ touch-ს
-          # რომ არსებული native artifacts წყაროზე ახალი გახდეს (make timestamp-based).
-          if ls takthirdparty/builds/android-arm64-v8a-release/lib/libgdal* >/dev/null 2>&1; then
-            echo "cache hit — native artifacts touch, heavy make გამოტოვდება"
+          HAVE_LIBS=0; HAVE_CONAN=0
+          ls takthirdparty/builds/android-arm64-v8a-release/lib/libgdal* >/dev/null 2>&1 && HAVE_LIBS=1
+          # conan packages (gradle-ს სჭირდება): ≥5 პაკეტი data/-ში = სრული cache
+          if [ -d "$HOME/.conan/data" ] && [ "$(ls -1 "$HOME/.conan/data" 2>/dev/null | wc -l)" -ge 5 ]; then HAVE_CONAN=1; fi
+
+          if [ "$HAVE_LIBS" = 1 ] && [ "$HAVE_CONAN" = 1 ]; then
+            # სრული cache-hit → prebuild საერთოდ გამოტოვდება (native libs + conan packages მზადაა)
+            echo "FULL cache hit — prebuild.sh გამოტოვდა (native + conan cached)"
+          elif [ "$HAVE_LIBS" = 1 ]; then
+            # ნაწილობრივი: native libs არის, conan არ არის → make გამოვტოვოთ (touch), prebuild-ი conan-ს ხელახლა გამოაქვეყნებს
+            echo "partial cache — native libs touch, make გამოტოვდება, conan republish"
             sed -i '/# Make the third party parts in parallel/i find ../takthirdparty/builds -print0 2>/dev/null | xargs -0 touch 2>/dev/null || true' scripts/prebuild.sh
+            ./scripts/prebuild.sh
           else
             echo "cache miss — სრული native build"
+            ./scripts/prebuild.sh
           fi
-          ./scripts/prebuild.sh
           df -h /
-          # prebuild.sh-ს set -e არ აქვს და შეცდომებს ყლაპავს — artifact-ებს ვამოწმებთ
+          # უსაფრთხოების ბადე: artifact-ები უნდა არსებობდეს (ცრუ success ვერ გაგვატყუებს)
           for t in arm64-v8a armeabi-v7a x86; do
             libdir="takthirdparty/builds/android-$t-release/lib"
             if ! ls "$libdir"/libgdal* >/dev/null 2>&1; then
@@ -162,13 +171,14 @@ jobs:
           done
           echo "✓ takthirdparty artifacts არსებობს სამივე არქიტექტურაზე"
 
-      # cache ინახება მაშინაც კი, თუ მომდევნო ეტაპი (gradle) ჩავარდა —
-      # 50-წუთიანი native build აღარ მეორდება ყოველ ცდაზე
-      - name: Save takthirdparty cache
+      # cache ინახება ჩავარდნისასაც — native build + conan packages აღარ მეორდება
+      - name: Save takthirdparty + conan cache
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: atak/takthirdparty/builds
+          path: |
+            atak/takthirdparty/builds
+            ~/.conan
           key: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-${{ github.run_id }}
 
       - name: Restore signing keystore
