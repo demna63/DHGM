@@ -23,4 +23,7 @@
     <color name="dhgm_text_primary">#FFFFFF</color>   <!-- textPrimary -->
     <color name="dhgm_text_secondary">#D0D8E4</color> <!-- textSecondary -->
     <color name="dhgm_text_disabled">#9AA6B8</color>  <!-- textDisabled (stale/no-data) -->
+
+    <!-- რუკის trail (breadcrumb) — telemetryAccent ნახევრადგამჭვირვალე -->
+    <color name="dhgm_trail_color">#CC64D2FF</color>
 </resources>

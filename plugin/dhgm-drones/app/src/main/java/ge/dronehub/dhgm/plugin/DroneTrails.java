@@ -23,16 +23,18 @@ public class DroneTrails {
 
     private static final String TAG = "DhgmDroneTrails";
     private static final int MAX_POINTS = 40;        // trail-ის მაქს. სიგრძე
-    private static final int TRAIL_COLOR = 0xCC64D2FF; // DroneHub telemetry ცისფერი
     private static final double TRAIL_WEIGHT = 3.0;
 
     private final MapView mapView;
+    private final int trailColor;   // dhgm_trail_color (colors.xml single-source)
     private MapGroup group;
     private final Map<Integer, Deque<GeoPoint>> points = new HashMap<>();
     private final Map<Integer, Polyline> lines = new HashMap<>();
 
-    public DroneTrails(MapView mapView) {
+    @SuppressWarnings("deprecation")
+    public DroneTrails(android.content.Context pluginContext, MapView mapView) {
         this.mapView = mapView;
+        this.trailColor = pluginContext.getResources().getColor(R.color.dhgm_trail_color);
     }
 
     private MapGroup group() {
@@ -70,7 +72,7 @@ public class DroneTrails {
             Polyline line = lines.get(sysid);
             if (line == null) {
                 line = new Polyline("DHGM.trail." + sysid);
-                line.setStrokeColor(TRAIL_COLOR);
+                line.setStrokeColor(trailColor);
                 line.setStrokeWeight(TRAIL_WEIGHT);
                 line.setMetaBoolean("removable", false);
                 lines.put(sysid, line);

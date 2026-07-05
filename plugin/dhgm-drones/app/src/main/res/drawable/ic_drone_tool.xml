@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- DHGM drones toolbar icon — რუკის მარკერის იდენტური chevron (UAV track). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#17A79A"
-        android:pathData="M4,6 L4,18 L14,12 Z" />
+        android:fillColor="#0A84FF"
+        android:pathData="M12,3 L18.5,20 L12,15.5 L5.5,20 Z" />
     <path
-        android:fillColor="#D0D8E4"
-        android:pathData="M16,8h4v8h-4z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,8.7 m-1.3,0 a1.3,1.3 0 1,0 2.6,0 a1.3,1.3 0 1,0 -2.6,0 Z" />
 </vector>
