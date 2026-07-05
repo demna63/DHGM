@@ -140,6 +140,7 @@ jobs:
           restore-keys: ttp-${{ runner.os }}-${{ env.ATAK_REF }}-
 
       - name: Build native dependencies (takthirdparty)
+        id: ttp-build
         working-directory: atak
         run: |
           export PATH="$CMAKE_HOME/bin:$PATH"
@@ -170,10 +171,13 @@ jobs:
             fi
           done
           echo "✓ takthirdparty artifacts არსებობს სამივე არქიტექტურაზე"
+          echo "ttp_verified=1" >> "$GITHUB_OUTPUT"
 
-      # cache ინახება ჩავარდნისასაც — native build + conan packages აღარ მეორდება
+      # cache ინახება gradle-ის ჩავარდნისასაც, მაგრამ ᲛᲮᲝᲚᲝᲓ მაშინ, როცა native
+      # artifacts გადამოწმებულია (ttp_verified) — cancelled/ნაწილობრივი run ვეღარ
+      # შეინახავს მოწამლულ cache-ს (2026-07-05-ის ინციდენტის root-cause fix).
       - name: Save takthirdparty + conan cache
-        if: always()
+        if: always() && steps.ttp-build.outputs.ttp_verified == '1'
         uses: actions/cache/save@v4
         with:
           path: |
