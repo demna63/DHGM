@@ -81,10 +81,10 @@ ATAK plugin SDK-ზე — ეს არის „ჩემზე მორგ�
   რომელიც CoT-ში არ ეტევა (mode, GPS fix, RSSI).
 - დრონზე tap → follow რეჟიმი, ტრაექტორიის კვალი (breadcrumbs).
 
-### ფაზა 3 — bridge-ის ინტეგრაცია GCS-ში
-Python bridge-ის ლოგიკა გადადის DroneHub-GCS-ის `custom/src/`-ში C++ მოდულად
-(`CotForwarder`) — GCS-ის პარამეტრებში ჩნდება „DHGM-ზე გადაცემა" ჩამრთველი და
-ცალკე პროცესი აღარ იქნება საჭირო.
+### ფაზა 3 — bridge-ის ინტეგრაცია GCS-ში (🚧 მუშაში)
+
+`CotForwarder` C++ მოდული DroneHub-GCS-ის `custom/src/`-ში (`dhgm-cotforwarder` branch):
+Settings → Telemetry → **„DHGM-ზე გადაცემა"** — CoT multicast + plugin TCP JSON, Python bridge-ის გარეშე.
 
 ---
 
