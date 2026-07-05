@@ -34,8 +34,10 @@ DHGM/
 
 ## ხელსაწყოები (`tools/`)
 - `bootstrap-atak.sh` — ATAK-CIV კლონირება `atak/`-ში + წინაპირობების შემოწმება.
-- `apply-dhgm-overlay.sh` — overlay-ს ადებს `atak/`-ზე (6 ნაბიჯი: rsync, branding,
-  DEV_BANNER მოხსნა, applicationId, status bar ფერი, encryption auto-key). იდემპოტენტური.
+- `apply-dhgm-overlay.sh` — overlay-ს ადებს `atak/`-ზე (8 ნაბიჯი: brand assets, rsync,
+  branding, DEV_BANNER მოხსნა, applicationId, status bar ფერი, encryption auto-key,
+  mount deadlock fix). იდემპოტენტური.
+- `fix-mount-deadlock.py` — FileSystemUtils mount pipe deadlock fix (ATAK PR#329).
 - `gen-icons.py` — `custom/brand/dhgm-logo.svg` → `drawable-*` ხატულები (cairosvg).
 - `gen-keystore.sh` — signing keystore გენერაცია.
 - `extract-untranslated.py` — უთარგმნელი სტრინგების სია values-ka-სთვის.
