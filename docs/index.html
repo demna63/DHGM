@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHGM — DroneHub Georgia Map</title>
+<style>
+  :root {
+    --bg: #0B0E14; --surface: #151A23; --elevated: #1E2530;
+    --accent: #0A84FF; --teal: #17A79A; --green: #30D158;
+    --text: #FFFFFF; --muted: #9AA6B8; --border: #2A323F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    font-family: -apple-system, "Noto Sans Georgian", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px 80px; }
+  header { text-align: center; margin-bottom: 48px; }
+  .logo {
+    width: 96px; height: 96px; border-radius: 22px; background: #1E2E4F;
+    display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;
+  }
+  .logo svg { width: 64px; height: 64px; }
+  h1 { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); font-size: 1.1rem; margin-top: 8px; }
+  .hero-desc { max-width: 620px; margin: 20px auto 0; color: #D0D8E4; }
+  .downloads { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 40px 0; }
+  @media (max-width: 620px) { .downloads { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; text-decoration: none; color: var(--text); transition: border-color .15s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .kind { color: var(--teal); font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .card h3 { font-size: 1.3rem; margin: 6px 0 8px; }
+  .card p { color: var(--muted); font-size: .95rem; }
+  .btn {
+    display: inline-block; margin-top: 16px; background: var(--accent); color: #fff;
+    padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: .95rem;
+  }
+  .btn.teal { background: var(--teal); }
+  section { margin-top: 48px; }
+  h2 { font-size: 1.5rem; margin-bottom: 16px; font-weight: 600; }
+  ol, ul { padding-left: 22px; color: #D0D8E4; }
+  li { margin: 8px 0; }
+  code {
+    background: var(--elevated); padding: 2px 7px; border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; color: #64D2FF;
+  }
+  .feat { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .feat div { background: var(--surface); border-radius: 12px; padding: 16px; border: 1px solid var(--border); }
+  .feat .ic { font-size: 1.4rem; }
+  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; text-align: center; }
+  a.link { color: var(--accent); }
+  .warn { background: #1E2530; border-left: 3px solid #FF9F0A; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 16px; color: #D0D8E4; font-size: .92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" fill-rule="evenodd" d="M156 104 H252 A156 156 0 0 1 252 416 H156 Z M216 172 H252 A96 96 0 0 1 252 348 H216 Z"/>
+        <polygon fill="#17A79A" points="158,210 158,302 250,256"/>
+        <rect x="158" y="250" width="140" height="12" transform="rotate(-16 158 256)" fill="#1E2E4F"/>
+      </svg>
+    </div>
+    <h1>DHGM</h1>
+    <div class="sub">DroneHub Georgia Map</div>
+    <p class="hero-desc">ATAK-ის ბაზაზე აწყობილი ტაქტიკური რუკის აპი — სრული ქართული ლოკალიზაციით
+      და DroneHub GCS-თან ცოცხალი კავშირით. დრონი რუკაზე: სიმაღლე, სიჩქარე, ბატარეა.</p>
+  </header>
+
+  <div class="downloads">
+    <a class="card" href="https://github.com/demna63/DHGM/releases/latest">
+      <div class="kind">აპლიკაცია</div>
+      <h3>DHGM app</h3>
+      <p>ტაქტიკური რუკა, ქართული, DroneHub ბრენდი. ~193 MB.</p>
+      <span class="btn">ჩამოტვირთვა →</span>
+    </a>
+    <a class="card" href="https://github.com/demna63/DHGM/releases/latest">
+      <div class="kind">Plugin</div>
+      <h3>DHGM Drones</h3>
+      <p>დრონების ცოცხალი პანელი. app-ის შემდეგ დააინსტალირე.</p>
+      <span class="btn teal">ჩამოტვირთვა →</span>
+    </a>
+  </div>
+  <div class="warn">📱 <b>ტაბლეტზე გახსენი ეს გვერდი</b> და პირდაპირ ჩამოტვირთე — ან სკანერით
+    გახსენი <span style="color:#64D2FF">github.com/demna63/DHGM/releases/latest</span></div>
+
+  <section>
+    <h2>რას აკეთებს</h2>
+    <div class="feat">
+      <div><div class="ic">🗺️</div>ტაქტიკური რუკა (ATAK-CIV 4.6)</div>
+      <div><div class="ic">🇬🇪</div>სრული ქართული + Noto ფონტი</div>
+      <div><div class="ic">🛸</div>დრონი რუკაზე (CoT) + პანელი</div>
+      <div><div class="ic">📊</div>სიმაღლე/სიჩქარე/ბატარეა ცოცხლად</div>
+      <div><div class="ic">🎯</div>follow, tap-to-center, trail</div>
+      <div><div class="ic">🎨</div>DroneHub navy დიზაინი</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ინსტალაცია</h2>
+    <ol>
+      <li>ძველი ATAK/DHGM <b>წაშალე</b> (თუ გაქვს).</li>
+      <li>ჩამოტვირთე და დააინსტალირე <b>DHGM app</b> (Play Protect → „Install anyway").</li>
+      <li>დააინსტალირე <b>DHGM Drones plugin</b> → Plugin Management-ში ჩართე „დრონები".</li>
+      <li>დრონისთვის Mac/PC-ზე გაუშვი bridge:<br>
+        <code>python3 bridge/dhgm_bridge.py --sim --sim-drones 3 --plugin-tcp 0.0.0.0:14550</code></li>
+    </ol>
+    <div class="warn">⚠️ APK-ები self-signed key-ითაა — Play Store-ის გარეთ. სრული ინსტრუქცია:
+      <a class="link" href="https://github.com/demna63/DHGM/blob/main/docs/usage.md">docs/usage.md</a></div>
+  </section>
+
+  <footer>
+    DroneHub Georgia · <a class="link" href="https://github.com/demna63/DHGM">GitHub</a> ·
+    <a class="link" href="https://github.com/demna63/DHGM/releases">ყველა ვერსია</a><br>
+    ATAK-CIV GPL-ტიპის ლიცენზია · dronehub.ge
+  </footer>
+</div>
+</body>
+</html>
