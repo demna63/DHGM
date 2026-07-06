@@ -14,4 +14,7 @@
     <string name="dhgm_host_hint">host:port (მაგ. 192.168.1.243:14550)</string>
     <string name="dhgm_connect">Connect</string>
     <string name="dhgm_connecting">Connecting to %1$s…</string>
+    <string name="dhgm_conn_title">DGGCS connection</string>
+    <string name="dhgm_conn_multicast">Map · SA multicast  239.2.3.1:6969</string>
+    <string name="dhgm_conn_tcp">Panel · TCP  %1$s</string>
 </resources>

@@ -76,6 +76,40 @@
         android:textColor="@color/dhgm_text_secondary"
         android:textSize="13sp" />
 
+    <!-- DGGCS კავშირის კონფიგი: ერთ ჰოსტზე multi-device SA (multicast) + პანელი (TCP) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card"
+        android:padding="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dhgm_conn_title"
+            android:textColor="@color/dhgm_telemetry"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/dhgm_conn_multicast"
+            android:textColor="@color/dhgm_text_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/dhgm_conn_tcp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/dhgm_text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

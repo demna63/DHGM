@@ -7,6 +7,7 @@ import android.view.View;
 import android.content.Intent;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.atak.plugins.impl.PluginLayoutInflater;
 import com.atakmap.android.dropdown.DropDown;
@@ -35,6 +36,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
     private final DronePanel panel;
     private final SharedPreferences prefs;
     private final EditText hostInput;
+    private final TextView connTcp;
     private BridgeTcpClient bridgeClient;
 
     public DhgmDronesDropDownReceiver(final MapView mapView, final Context context) {
@@ -46,6 +48,10 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
 
         hostInput = panelView.findViewById(R.id.dhgm_host_input);
         hostInput.setText(prefs.getString(PREF_HOST, DEFAULT_HOST));
+
+        connTcp = panelView.findViewById(R.id.dhgm_conn_tcp);
+        connTcp.setText(pluginContext.getString(R.string.dhgm_conn_tcp,
+                prefs.getString(PREF_HOST, DEFAULT_HOST)));
 
         Button connectBtn = panelView.findViewById(R.id.dhgm_connect_btn);
         connectBtn.setOnClickListener(v -> reconnect());
@@ -67,6 +73,8 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
             } catch (NumberFormatException ignored) {
             }
         }
+
+        connTcp.setText(pluginContext.getString(R.string.dhgm_conn_tcp, host + ":" + port));
 
         if (bridgeClient != null) {
             bridgeClient.disconnect();

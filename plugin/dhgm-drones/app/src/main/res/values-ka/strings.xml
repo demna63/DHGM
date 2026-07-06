@@ -13,4 +13,7 @@
     <string name="dhgm_host_hint">host:port (მაგ. 192.168.1.243:14550)</string>
     <string name="dhgm_connect">დაკავშირება</string>
     <string name="dhgm_connecting">ვუკავშირდები %1$s…</string>
+    <string name="dhgm_conn_title">DGGCS კავშირი</string>
+    <string name="dhgm_conn_multicast">რუკა · SA multicast  239.2.3.1:6969</string>
+    <string name="dhgm_conn_tcp">პანელი · TCP  %1$s</string>
 </resources>
