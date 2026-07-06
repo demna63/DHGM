@@ -142,19 +142,15 @@ else
 fi
 MAINPREF=atak/atak/ATAK/app/src/main/res/xml/main_preferences.xml
 if [ -f "$MAINPREF" ]; then
-  # bluetoothPref — BT GPS puck DHGM-ს არ სჭირდება; atakAccounts — TAK server auth,
-  # server-გარეშე უსარგებლო.
-  python3 tools/hide-preferences.py "$MAINPREF" bluetoothPref atakAccounts
+  # bluetoothPref — BT GPS puck DHGM-ს არ სჭირდება; atakAccounts — TAK server auth.
+  # settingsPref (მთელი "ქსელის პარამეტრები") — მისი შიგნით "SERVER CONNECTIONS"
+  # ეკრანი ATAK-ში პროგრამულადაა აწყობილი (არა სტატიკურ ATAK/app res/xml-ში), ამიტომ
+  # ქირურგიულად ვერ ვჭრით; თანაც ის ახალ Android-ზე იკრაშება. DHGM-ს ქსელის კონფიგი
+  # არ სჭირდება (multicast 239.2.3.1:6969 default; plugin TCP — DGGCS პანელში), ამიტომ
+  # მთელ Network-branch-ს ვმალავთ → crash-ვექტორი სრულად იკეტება.
+  python3 tools/hide-preferences.py "$MAINPREF" bluetoothPref atakAccounts settingsPref
 else
   echo "  ⚠ main_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
-fi
-# ღრმა TAK-server UI — networkSettings-ის შიგნით "SERVER CONNECTIONS" ბლოკი (მართვა,
-# კავშირის ვიჯეტი, მონიტორინგი). ზუსტი ფაილის სახელი upstream-ში იცვლება → title-ით
-# მთელ res/xml-ს ვასკანერებთ (preferences_text226/228/230 = TAK-სპეციფიკური).
-XMLDIR=atak/atak/ATAK/app/src/main/res/xml
-if [ -d "$XMLDIR" ]; then
-  python3 tools/hide-preferences.py "$XMLDIR" \
-    @string/preferences_text226 @string/preferences_text228 @string/preferences_text230
 fi
 
 echo "✓ overlay დადებულია"

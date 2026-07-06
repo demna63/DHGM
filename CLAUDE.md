@@ -38,8 +38,10 @@ DHGM/
   branding, DEV_BANNER მოხსნა, applicationId, status bar ფერი, encryption auto-key,
   mount deadlock fix, ზედმეტი settings-პარამეტრების მოჭრა). იდემპოტენტური.
 - `fix-mount-deadlock.py` — FileSystemUtils mount pipe deadlock fix (ATAK PR#329).
-- `hide-preferences.py` — ATAK preference XML-დან `<Preference key="...">` მოჭრა
-  (TAK server streaming/TADIL-J/Bluetooth/Accounts — DHGM LAN/GCS ნაკადს არ სჭირდება).
+- `hide-preferences.py` — ATAK preference XML-დან preference-ჩანაწერების მოჭრა key-ით ან
+  `@string/`-title-ით (ფაილი ან dir-scan). DHGM-ს TAK server/TADIL-J/Bluetooth/Accounts და
+  მთელი Network-branch (`settingsPref`) არ სჭირდება (LAN multicast default; TAK-server ეკრანი
+  ATAK-ში programmatic-ია → top-level entry-ს ვჭრით, ეს crash-ვექტორსაც კეტავს).
 - `gen-icons.py` — `custom/brand/dhgm-logo.svg` → `drawable-*` ხატულები (cairosvg).
 - `gen-keystore.sh` — signing keystore გენერაცია.
 - `extract-untranslated.py` — უთარგმნელი სტრინგების სია values-ka-სთვის.
