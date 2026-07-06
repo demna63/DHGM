@@ -2,6 +2,8 @@
 <resources>
     <string name="dhgm_drones_title">Drones</string>
     <string name="dhgm_drones_summary">DroneHub live telemetry panel</string>
+    <string name="dhgm_chat_title">Chat</string>
+    <string name="dhgm_chat_summary">Mesh chat (GeoChat) between devices on the LAN</string>
     <string name="dhgm_bridge_disconnected">Bridge not connected (127.0.0.1:14550)</string>
     <string name="dhgm_bridge_line">Bridge: %1$s</string>
     <style name="ATAKPluginTheme" parent="@android:style/Theme.Holo.NoActionBar" />
