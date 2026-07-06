@@ -148,5 +148,13 @@ if [ -f "$MAINPREF" ]; then
 else
   echo "  ⚠ main_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
 fi
+# ღრმა TAK-server UI — networkSettings-ის შიგნით "SERVER CONNECTIONS" ბლოკი (მართვა,
+# კავშირის ვიჯეტი, მონიტორინგი). ზუსტი ფაილის სახელი upstream-ში იცვლება → title-ით
+# მთელ res/xml-ს ვასკანერებთ (preferences_text226/228/230 = TAK-სპეციფიკური).
+XMLDIR=atak/atak/ATAK/app/src/main/res/xml
+if [ -d "$XMLDIR" ]; then
+  python3 tools/hide-preferences.py "$XMLDIR" \
+    @string/preferences_text226 @string/preferences_text228 @string/preferences_text230
+fi
 
 echo "✓ overlay დადებულია"
