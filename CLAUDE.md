@@ -34,10 +34,12 @@ DHGM/
 
 ## ხელსაწყოები (`tools/`)
 - `bootstrap-atak.sh` — ATAK-CIV კლონირება `atak/`-ში + წინაპირობების შემოწმება.
-- `apply-dhgm-overlay.sh` — overlay-ს ადებს `atak/`-ზე (8 ნაბიჯი: brand assets, rsync,
+- `apply-dhgm-overlay.sh` — overlay-ს ადებს `atak/`-ზე (9 ნაბიჯი: brand assets, rsync,
   branding, DEV_BANNER მოხსნა, applicationId, status bar ფერი, encryption auto-key,
-  mount deadlock fix). იდემპოტენტური.
+  mount deadlock fix, ზედმეტი settings-პარამეტრების მოჭრა). იდემპოტენტური.
 - `fix-mount-deadlock.py` — FileSystemUtils mount pipe deadlock fix (ATAK PR#329).
+- `hide-preferences.py` — ATAK preference XML-დან `<Preference key="...">` მოჭრა
+  (TAK server streaming/TADIL-J/Bluetooth/Accounts — DHGM LAN/GCS ნაკადს არ სჭირდება).
 - `gen-icons.py` — `custom/brand/dhgm-logo.svg` → `drawable-*` ხატულები (cairosvg).
 - `gen-keystore.sh` — signing keystore გენერაცია.
 - `extract-untranslated.py` — უთარგმნელი სტრინგების სია values-ka-სთვის.
