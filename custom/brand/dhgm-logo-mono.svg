@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Monochrome themed-icon layer (Android 13+): "D" silhouette, counter evenodd-ით.
+       ფერი უმნიშვნელოა — სისტემა თავად ატონირებს; მხოლოდ alpha/ფორმაა მნიშვნელოვანი. -->
+  <path fill="#000000" fill-rule="evenodd" d="
+    M156 104 H252 A156 156 0 0 1 252 416 H156 Z
+    M216 172 H252 A96 96 0 0 1 252 348 H216 Z
+  "/>
+</svg>
