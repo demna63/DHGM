@@ -15,9 +15,11 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGO_SVG = ROOT / "custom/brand/dhgm-logo.svg"
+MONOCHROME_SVG = ROOT / "custom/brand/dhgm-logo-mono.svg"
 SPLASH_SVG = ROOT / "custom/brand/dhgm-splash.svg"
 SPLASH_PORTRAIT_SVG = ROOT / "custom/brand/dhgm-splash-portrait.svg"
 OUT = ROOT / "custom/overlay/atak/ATAK/app/src/main/res"
+DOCS = ROOT / "docs"
 
 # Android density → launcher icon px (legacy drawable sizes)
 ICON_DENSITIES = {
@@ -52,6 +54,7 @@ FOREGROUND_DENSITIES = {
     "xxxhdpi": 432,
 }
 FOREGROUND_NAME = "ic_atak_launcher_foreground.png"
+MONOCHROME_NAME = "ic_atak_launcher_monochrome.png"
 MIPMAP_ICON_NAMES = ("ic_atak_launcher.png", "ic_mil_atak_launcher.png")
 ADAPTIVE_XML_NAMES = ("ic_atak_launcher.xml", "ic_mil_atak_launcher.xml")
 
@@ -66,6 +69,19 @@ def _write_png(path: Path, data: bytes) -> None:
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     path.write_bytes(buf.getvalue())
+
+
+def _canvas_png(svg: Path, canvas: int, scale: float) -> bytes:
+    """SVG-ს canvas-ის scale%-ზე ვხატავთ, ცენტრში, დანარჩენი გამჭვირვალე padding.
+    adaptive layer bitmap 108dp-ს ავსებს → padding-ის გარეშე ლოგო masking-ზე იჭრება."""
+    logo = int(canvas * scale)
+    fg = Image.open(io.BytesIO(_png_bytes(svg, logo, logo))).convert("RGBA")
+    base = Image.new("RGBA", (canvas, canvas), (0, 0, 0, 0))
+    off = (canvas - logo) // 2
+    base.paste(fg, (off, off), fg)
+    buf = io.BytesIO()
+    base.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
 
 
 def gen_launcher_icons() -> None:
@@ -85,15 +101,27 @@ def gen_launcher_icons() -> None:
 
 
 def gen_adaptive_foreground() -> None:
-    """Adaptive icon foreground — ლოგო safe zone-ში (~62%; ⌀66/108 masking guard)."""
+    """Adaptive icon foreground — ლოგო canvas-ზე ~62%, გამჭვირვალე padding-ით
+    (⌀66/108 safe zone; padding-ის გარეშე bitmap ავსებდა 108dp-ს და D იჭრებოდა)."""
     if not LOGO_SVG.is_file():
         raise FileNotFoundError(LOGO_SVG)
     for density, canvas in FOREGROUND_DENSITIES.items():
-        logo = int(canvas * 0.62)
-        data = _png_bytes(LOGO_SVG, logo, logo)
+        data = _canvas_png(LOGO_SVG, canvas, 0.62)
         outdir = OUT / f"drawable-{density}"
         _write_png(outdir / FOREGROUND_NAME, data)
-        print(f"  + {outdir.name}/{FOREGROUND_NAME} ({logo}px in {canvas}dp canvas)")
+        print(f"  + {outdir.name}/{FOREGROUND_NAME} (62% in {canvas}px canvas)")
+
+
+def gen_adaptive_monochrome() -> None:
+    """Adaptive icon monochrome layer (Android 13+ themed icons) — „D" силуэт."""
+    if not MONOCHROME_SVG.is_file():
+        print(f"  ⚠ {MONOCHROME_SVG.name} არ არის — monochrome გამოტოვდა")
+        return
+    for density, canvas in FOREGROUND_DENSITIES.items():
+        data = _canvas_png(MONOCHROME_SVG, canvas, 0.58)
+        outdir = OUT / f"drawable-{density}"
+        _write_png(outdir / MONOCHROME_NAME, data)
+        print(f"  + {outdir.name}/{MONOCHROME_NAME} (58% in {canvas}px canvas)")
 
 
 def gen_adaptive_xml() -> None:
@@ -104,6 +132,7 @@ def gen_adaptive_xml() -> None:
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/dhgm_launcher_bg"/>
     <foreground android:drawable="@drawable/ic_atak_launcher_foreground"/>
+    <monochrome android:drawable="@drawable/ic_atak_launcher_monochrome"/>
 </adaptive-icon>
 """
     for name in ADAPTIVE_XML_NAMES:
@@ -135,17 +164,32 @@ def gen_brand512() -> None:
     print(f"  + {brand512.relative_to(ROOT)}")
 
 
+def gen_favicon() -> None:
+    """GitHub Pages landing-ის (docs/) favicon + apple-touch icon."""
+    if not DOCS.is_dir():
+        print(f"  ⚠ {DOCS} არ არის — favicon გამოტოვდა")
+        return
+    for px, name in ((48, "favicon.png"), (32, "favicon-32.png"), (180, "apple-touch-icon.png")):
+        cairosvg.svg2png(url=str(LOGO_SVG), write_to=str(DOCS / name),
+                         output_width=px, output_height=px)
+        print(f"  + docs/{name} ({px}px)")
+
+
 def main() -> int:
     print("== launcher icons ==")
     gen_launcher_icons()
     print("== adaptive icon foreground ==")
     gen_adaptive_foreground()
+    print("== adaptive icon monochrome (Android 13+) ==")
+    gen_adaptive_monochrome()
     print("== adaptive icon XML (API 26+) ==")
     gen_adaptive_xml()
     print("== splash screens ==")
     gen_splash()
     print("== brand 512 ==")
     gen_brand512()
+    print("== favicon (landing) ==")
+    gen_favicon()
     print("✓ brand assets გენერირებულია")
     return 0
 
