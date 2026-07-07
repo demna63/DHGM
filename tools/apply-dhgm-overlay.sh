@@ -140,14 +140,26 @@ if [ -f "$NETPREF" ]; then
 else
   echo "  ⚠ network_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
 fi
+# DHGM-ს settings-ის top-level ეკრანი: SettingsActivity-ის getDefaultHomePreferences()
+# legacy_settings flag-ზეა დამოკიდებული — default (false) → MyPreferenceFragment
+# (my_preferences.xml), legacy → MainPreferencesFragment (main_preferences.xml).
+# ორივე ფაილს ვჭრით, რომ flag-ის მდგომარეობის მიუხედავად entry-ები არ ჩანდეს.
+#
+# my_preferences.xml (რეალურად რენდერდება default-ზე): networkPrefs — Network entry,
+# რომლის შიგნიდან TAK „SERVER CONNECTIONS" ეკრანი ახალ Android-ზე იკრაშება;
+# accounts — TAK server auth; legacyPrefs — legacy ეკრანის (main_preferences)
+# შესასვლელი, სადაც Bluetooth/Accounts-ია → მოჭრით ამ crash/BT-გზასაც ვკეტავთ.
+MYPREF=atak/atak/ATAK/app/src/main/res/xml/my_preferences.xml
+if [ -f "$MYPREF" ]; then
+  python3 tools/hide-preferences.py "$MYPREF" networkPrefs accounts legacyPrefs
+else
+  echo "  ⚠ my_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
+fi
 MAINPREF=atak/atak/ATAK/app/src/main/res/xml/main_preferences.xml
 if [ -f "$MAINPREF" ]; then
-  # bluetoothPref — BT GPS puck DHGM-ს არ სჭირდება; atakAccounts — TAK server auth.
-  # settingsPref (მთელი "ქსელის პარამეტრები") — მისი შიგნით "SERVER CONNECTIONS"
-  # ეკრანი ATAK-ში პროგრამულადაა აწყობილი (არა სტატიკურ ATAK/app res/xml-ში), ამიტომ
-  # ქირურგიულად ვერ ვჭრით; თანაც ის ახალ Android-ზე იკრაშება. DHGM-ს ქსელის კონფიგი
-  # არ სჭირდება (multicast 239.2.3.1:6969 default; plugin TCP — DGGCS პანელში), ამიტომ
-  # მთელ Network-branch-ს ვმალავთ → crash-ვექტორი სრულად იკეტება.
+  # legacy layout-ის (legacy_settings=true) fallback — იგივე entry-ები:
+  # settingsPref (Network → TAK SERVER CONNECTIONS crash), bluetoothPref (BT GPS puck),
+  # atakAccounts (TAK server auth). DHGM LAN multicast-ს იყენებს, ეს არცერთი არ სჭირდება.
   python3 tools/hide-preferences.py "$MAINPREF" bluetoothPref atakAccounts settingsPref
 else
   echo "  ⚠ main_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
