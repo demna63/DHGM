@@ -28,7 +28,35 @@ public class DhgmDronesMapComponent extends DropDownMapComponent {
         DocumentedIntentFilter filter = new DocumentedIntentFilter();
         filter.addAction(DhgmDronesDropDownReceiver.SHOW_DRONES);
         registerDropDownReceiver(dropDown, filter);
+
+        trimSettings();
+
         Log.d(TAG, "DHGM drones plugin registered");
+    }
+
+    /**
+     * DHGM-ისთვის ზედმეტი settings-entry-ების მოხსნა runtime-ზე.
+     *
+     * ATAK-ის settings-ეკრანი პროგრამულადაა აწყობილი
+     * ({@code ToolsPreferenceFragment.register}), არა სტატიკური main_preferences.xml-იდან —
+     * ამიტომ overlay-ის XML-რედაქტი მას ვერ ცვლის. აქ იმავე ფრაგმენტის public
+     * {@code unregister(key)}-ს ვიძახებთ (plugin core-ის შემდეგ იტვირთება → entry-ები
+     * უკვე რეგისტრირებულია). key-ის არარსებობა უვნებელი no-op-ია.
+     *
+     * settingsPref (ქსელი) — TAK server + „SERVER CONNECTIONS" crash-ვექტორი ახალ
+     * Android-ზე; DHGM LAN multicast-ს იყენებს. bluetoothPref / atakAccounts —
+     * DHGM-ს არ სჭირდება.
+     */
+    private void trimSettings() {
+        final String[] keys = { "settingsPref", "bluetoothPref", "atakAccounts" };
+        for (String key : keys) {
+            try {
+                com.atakmap.app.preferences.ToolsPreferenceFragment.unregister(key);
+            } catch (Throwable t) {
+                Log.w(TAG, "unregister " + key + " failed: " + t.getMessage());
+            }
+        }
+        Log.d(TAG, "settings trimmed (network/bluetooth/accounts)");
     }
 
     @Override
