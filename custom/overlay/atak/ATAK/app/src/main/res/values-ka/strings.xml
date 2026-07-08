@@ -1296,7 +1296,7 @@
     <string name="mist_m_gsw_abbr">ტყვ.</string>
     <string name="mist_m_gsw">ტ./GSW</string>
     <string name="mist_m_burn_abbr">დამ.</string>
-    <string name="mist_m_burn">დამ. > 20%</string>
+    <string name="mist_m_burn">დამ. > 20%%</string>
     <string name="mist_m_cold_abbr">ყინ.</string>
     <string name="mist_m_cold">ყინვა</string>
     <string name="mist_m_heat_abbr">სიც.</string>
@@ -2083,7 +2083,7 @@
     <string name="details_text15">გრძედი (მაგ. -84.394722)</string>
     <string name="details_text16">Demo სერვერი</string>
     <string name="details_text18">მოგება: — ფუტი</string>
-    <string name="details_text19">დახრილობა: — %</string>
+    <string name="details_text19">დახრილობა: — %%</string>
     <string name="details_text20">სულ დისტ.</string>
     <string name="details_text21">-- ფუტი</string>
     <string name="details_text22">მაქს. სიმ.</string>
