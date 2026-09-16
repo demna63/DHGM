@@ -4,15 +4,29 @@ from __future__ import annotations
 
 import socket
 import threading
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 
 class PluginTcpHub:
     """listen bind host:port; კლიენტებს ეგზავნება newline-terminated JSON."""
 
-    def __init__(self, bind: str):
+    #: sendall timeout (წმ) — ჩეჭდილ კლიენტი (ტელეფონი ძილში, Wi-Fi drop) bridge-ის
+    #: main loop-ს (და CoT-ს) არ უნდა ბლოკავდეს; timeout → კლიენტი dead-ია.
+    DEFAULT_SEND_TIMEOUT_S = 0.5
+
+    def __init__(self, bind: str, send_timeout_s: float = DEFAULT_SEND_TIMEOUT_S,
+                 hello_line: Optional[Callable[[], str]] = None):
+        """
+        Args:
+            bind: ``host:port``; ცარიელი host (``:14550``) → ``0.0.0.0`` (LAN — ტელეფონისთვის).
+            send_timeout_s: sendall timeout; გადაჭარბება → კლიენტი მოიცილდება.
+            hello_line: ``bridge_hello`` ხაზის provider — ეგზავნება **მხოლოდ ახალ**
+                კლიენტს accept-ისთანავე (accept thread-ზე; thread-safe უნდა იყოს).
+        """
         host, _, port_s = bind.rpartition(":")
-        self._host = host or "127.0.0.1"
+        self._send_timeout_s = send_timeout_s
+        self._hello_line = hello_line
+        self._host = host or "0.0.0.0"
         self._port = int(port_s)
         self._lock = threading.Lock()
         self._clients: List[socket.socket] = []
@@ -28,6 +42,11 @@ class PluginTcpHub:
     def bind(self) -> str:
         return "%s:%d" % (self._host, self._port)
 
+    @property
+    def port(self) -> int:
+        """რეალური port (bind ``:0``-ზე OS-ის მიერ არჩეულ)."""
+        return self._srv.getsockname()[1]
+
     def _accept_loop(self) -> None:
         self._srv.settimeout(1.0)
         while not self._stop.is_set():
@@ -38,7 +57,19 @@ class PluginTcpHub:
             except OSError:
                 break
             conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            conn.settimeout(self._send_timeout_s)
             with self._lock:
+                # hello lock-ის ქვეშ → ეს კლიენტი broadcast-ის ხაზებამდე hello-ს იღებს.
+                if self._hello_line is not None:
+                    try:
+                        line = self._hello_line()
+                        conn.sendall((line if line.endswith("\n") else line + "\n").encode("utf-8"))
+                    except OSError:
+                        try:
+                            conn.close()
+                        except OSError:
+                            pass
+                        continue
                 self._clients.append(conn)
 
     def broadcast(self, line: str) -> None:

@@ -40,7 +40,7 @@ bridge თითო დრონზე (MAVLink sysid) აგზავნის 
 
 ტესტები: `cd bridge && python3 -m unittest discover -s tests`
 
-Plugin TCP (ფაზა 2a): `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550`
+Plugin TCP (ფაზა 2a): `python3 bridge/dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550` → პანელზე host = Mac-ის LAN IP:14550 (bridge stderr-ზე ბეჭდავს). `127.0.0.1` ტელეფონზე მხოლოდ `adb reverse tcp:14550 tcp:14550`-ით მუშაობს.
 
 ### ფაზა 1 — DHGM fork (branding + ქართული) ✅
 

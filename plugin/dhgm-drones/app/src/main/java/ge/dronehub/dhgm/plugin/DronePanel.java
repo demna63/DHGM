@@ -15,6 +15,7 @@ import com.atakmap.coremap.maps.coords.GeoPoint;
 import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -22,7 +23,15 @@ import java.util.Map;
  * ცოცხალ ბარათს ხატავს (callsign, სიმაღლე, სიჩქარე, ბატარეა, რეჟიმი, GPS).
  * ბარათზე tap → რუკაზე ცენტრირება + follow toggle. Follow → რუკა დრონს მიჰყვება.
  * stale დრონი ნაცრისფრდება (ticker-ით, ტელემეტრიის გარეშეც).
- * ყველა UI-ცვლილება panel view-ის thread-ზე (post) ხდება.
+ *
+ * <p>Thread მოდელი: public მეთოდებ ნებისმიერ thread-იდან გამოძახდებიან; ყველა
+ * state/UI-ცვლილება main {@link Handler}-ზე ხდება (<b>არა</b> {@code View.post} — dropdown-ის
+ * დახურვისას view detached-ია და მისი post-ებ მომდევნო attach-ამდე ყოვნდებიან,
+ * API &lt; 24-ზე კი იკარგებიან). პანელი ფონზეც მუშაობს: follow/heading/trail დახურულ
+ * პანელზეც ანახლდება.
+ *
+ * <p>Session: ყოველ (ხელახლა) დაკავშირება ახალ session id-ს იღებს; ძველ კლიენტის
+ * დაგვიანებულ ხაზებ/state-ებ ({@code session != current}) იგნორირდება.
  */
 public class DronePanel {
 
@@ -49,6 +58,7 @@ public class DronePanel {
     private final Map<Integer, View> cards = new LinkedHashMap<>();
 
     private int followSysid = -1;  // -1 = follow გამორთული
+    private int session = 0;       // მხოლოდ main thread-ზე
     private boolean ticking = false;
     private final DroneTrails trails;
 
@@ -88,8 +98,9 @@ public class DronePanel {
     }
 
     /** bridge-ის ერთი ხაზი (newline-delimited JSON). */
-    public void onBridgeLine(final String line) {
-        panelView.post(() -> {
+    public void onBridgeLine(final int sessionId, final String line) {
+        ui.post(() -> {
+            if (sessionId != session) return;
             try {
                 handle(new JSONObject(line));
             } catch (Exception e) {
@@ -98,38 +109,70 @@ public class DronePanel {
         });
     }
 
-    /** კავშირის მდგომარეობა (connect/disconnect). */
-    public void setConnected(final boolean connected) {
-        panelView.post(() -> {
-            if (!connected) {
-                stopTicker();
-                followSysid = -1;
-                drones.clear();
-                listView.removeAllViews();
-                cards.clear();
-                trails.clearAll();
-                showEmpty(true);
-                statusView.setText(R.string.dhgm_bridge_disconnected);
-                statusView.setTextColor(C_MUTED);
-            } else {
-                startTicker();
-            }
-        });
-    }
-
-    /** მყისიერი უკუკავშირი „დაკავშირება" ღილაკზე — ვუკავშირდები host:port…. */
-    public void setConnecting(final String hostPort) {
-        panelView.post(() -> {
-            followSysid = -1;
-            drones.clear();
-            listView.removeAllViews();
-            cards.clear();
-            trails.clearAll();
-            showEmpty(true);
+    /** ახალ session-ის დაწყება — ვუკავშირდები host:port…. */
+    public void setConnecting(final int sessionId, final String hostPort) {
+        ui.post(() -> {
+            session = sessionId;
+            clearDrones();
             statusView.setText(pluginContext.getString(R.string.dhgm_connecting, hostPort));
             statusView.setTextColor(C_WARN);
             startTicker();
         });
+    }
+
+    /** {@link BridgeTcpClient} state → სტატუს-ხაზი. */
+    public void onClientState(final int sessionId, final BridgeTcpClient.State state,
+                              final String detail, final long retryInMs) {
+        ui.post(() -> {
+            if (sessionId != session) return;
+            switch (state) {
+                case CONNECTING:
+                    break;  // setConnecting-ი უკვე აჩვენა
+                case CONNECTED:
+                    refreshStatus();
+                    break;
+                case DISCONNECTED:
+                    // bridge-ის გარეშე ბარათებ/trail-ებ მატყუარ იქნებოდნენ.
+                    clearDrones();
+                    statusView.setText(pluginContext.getString(R.string.dhgm_bridge_retrying,
+                            detail == null ? "—" : detail,
+                            Math.max(1L, (retryInMs + 999L) / 1000L)));
+                    statusView.setTextColor(C_CRIT);
+                    break;
+                default:
+                    break;
+            }
+        });
+    }
+
+    /** host ცარიელია — კავშირი არ იწყება. */
+    public void setIdle(final int sessionId, final int messageRes) {
+        ui.post(() -> {
+            session = sessionId;
+            clearDrones();
+            stopTicker();
+            statusView.setText(messageRes);
+            statusView.setTextColor(C_MUTED);
+        });
+    }
+
+    /** plugin unload: ticker-ის შეჩერება + trail-ების/group-ის მოცილება რუკიდან. */
+    public void dispose() {
+        ui.post(() -> {
+            session = -1;
+            stopTicker();
+            clearDrones();
+            trails.dispose();
+        });
+    }
+
+    private void clearDrones() {
+        followSysid = -1;
+        drones.clear();
+        listView.removeAllViews();
+        cards.clear();
+        trails.clearAll();
+        showEmpty(true);
     }
 
     private void handle(JSONObject o) {
@@ -143,9 +186,8 @@ public class DronePanel {
                 remove(o.optInt("sysid", -1));
                 break;
             case "bridge_hello":
-                statusView.setTextColor(C_OK);
-                statusView.setText(R.string.dhgm_bridge_waiting);
-                break;
+            case "bridge_heartbeat":
+                break;  // keepalive — სტატუსს refreshStatus() ანახლებს
             default:
                 break;
         }
@@ -270,8 +312,8 @@ public class DronePanel {
         }
 
         String alt = t.altAglM != null
-                ? String.format("%.0f m AGL", t.altAglM)
-                : (t.altMslM != null ? String.format("%.0f m MSL", t.altMslM) : "— m");
+                ? String.format(Locale.US, "%.0f m AGL", t.altAglM)
+                : (t.altMslM != null ? String.format(Locale.US, "%.0f m MSL", t.altMslM) : "— m");
         altspeed.setText(pluginContext.getString(
                 R.string.dhgm_card_altspeed, alt, t.speedMps, t.courseDeg));
 
