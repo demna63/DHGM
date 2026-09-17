@@ -59,6 +59,9 @@ class DroneState:
         self.gps_fix: str = "UNKNOWN"
         self.satellites: Optional[int] = None
         self.rssi_dbm: Optional[int] = None
+        # RC link (RC_CHANNELS.rssi → %). ExpressLRS/CRSF: PX4 — LQ; ArduPilot — RSSI
+        # ან LQ (RC_OPTIONS bit 10 „Use LQ instead of normalised RSSI").
+        self.rc_rssi_pct: Optional[int] = None
         self.last_seen = 0.0
 
     @property
@@ -178,6 +181,13 @@ class CotSender:
                 print("[dhgm] გაგზავნა ვერ მოხერხდა %s:%d — %s" % (host, port, e), file=sys.stderr)
 
 
+def rc_rssi_percent(raw: int) -> Optional[int]:
+    """MAVLink ``RC_CHANNELS.rssi`` (0..254, 255 = unknown) → 0..100 %; unknown → None."""
+    if raw is None or raw < 0 or raw >= 255:
+        return None
+    return int(round(raw * 100.0 / 254.0))
+
+
 def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
                        mode_string: Callable[[object], str]) -> None:
     """ერთი MAVLink შეტყობინების ასახვა დრონის state-ზე (pure — ტესტირებადი).
@@ -194,7 +204,8 @@ def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
     if sysid == 0 or sysid >= 250:  # GCS/broadcast id-ები გამოვტოვოთ
         return
     t = msg.get_type()
-    if t not in ("GLOBAL_POSITION_INT", "VFR_HUD", "SYS_STATUS", "GPS_RAW_INT", "HEARTBEAT"):
+    if t not in ("GLOBAL_POSITION_INT", "VFR_HUD", "SYS_STATUS", "GPS_RAW_INT", "RC_CHANNELS",
+                 "HEARTBEAT"):
         return
     st = states.get(sysid)
     if st is None:
@@ -228,6 +239,8 @@ def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
             if abs(sep) <= GEOID_SEP_MAX_M:
                 st.geoid_sep = sep
         st.last_seen = now
+    elif t == "RC_CHANNELS":
+        st.rc_rssi_pct = rc_rssi_percent(msg.rssi)
     elif t == "HEARTBEAT":
         # იგივე sysid-ის gimbal/camera component-ის HEARTBEAT რეჟიმს არ გადააწერს.
         if msg.autopilot == MAV_AUTOPILOT_INVALID:

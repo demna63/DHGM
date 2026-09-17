@@ -258,3 +258,29 @@ class TestDuplicateSource(unittest.TestCase):
 
         root = ET.fromstring(cot_event(self._state(), 1.0, 10.0, instance='a"<b'))
         self.assertEqual(root.find("detail/" + SOURCE_TAG).get("instance"), 'a"<b')
+
+
+class TestRcRssi(unittest.TestCase):
+    """RC link RSSI/LQ (ELRS/CRSF) — RC_CHANNELS.rssi → rc_rssi_pct."""
+
+    def test_percent_mapping(self):
+        from dhgm_bridge import rc_rssi_percent
+
+        self.assertEqual(rc_rssi_percent(0), 0)
+        self.assertEqual(rc_rssi_percent(254), 100)
+        self.assertEqual(rc_rssi_percent(127), 50)
+        self.assertIsNone(rc_rssi_percent(255))
+        self.assertIsNone(rc_rssi_percent(-1))
+
+    def test_rc_channels_to_json(self):
+        import json
+        from plugin_json import telemetry_payload
+
+        states = {}
+        handle_mavlink_msg(states, _gpi(), 1.0, _mode)
+        handle_mavlink_msg(states, _Msg("RC_CHANNELS", rssi=221), 1.0, _mode)
+        payload = telemetry_payload(states[1], 1.0)
+        self.assertEqual(payload["rc_rssi_pct"], 87)
+        handle_mavlink_msg(states, _Msg("RC_CHANNELS", rssi=255), 2.0, _mode)
+        self.assertNotIn("rc_rssi_pct", telemetry_payload(states[1], 2.0))
+        json.dumps(payload)

@@ -61,6 +61,17 @@ public final class PluginJvmTests {
                 && HostPortParser.parsePort("-1", 7) == 7, "parsePort bounds");
     }
 
+    private static void telemetryTests() {
+        DroneTelemetry t = new DroneTelemetry();
+        check(t.rcLinkLabel() == null, "rc label: unknown → null");
+        t.rcRssiPct = 87;
+        check("RC 87%".equals(t.rcLinkLabel()), "rc label: 87%");
+        t.rcRssiPct = 25;
+        check("⚠ RC 25%".equals(t.rcLinkLabel()), "rc label: low link warns");
+        check(DroneTelemetry.clampPct(100) == 100 && DroneTelemetry.clampPct(101) == null
+                && DroneTelemetry.clampPct(-1) == null, "clampPct bounds");
+    }
+
     private static void backoffTests() {
         check(BridgeTcpClient.nextBackoff(1000) == 2000, "backoff 1s → 2s");
         check(BridgeTcpClient.nextBackoff(8000) == BridgeTcpClient.BACKOFF_MAX_MS, "backoff capped");
@@ -123,6 +134,7 @@ public final class PluginJvmTests {
     public static void main(String[] args) throws Exception {
         hostPortTests();
         backoffTests();
+        telemetryTests();
         clientTests();
         System.out.println(failures == 0 ? "ALL PASS" : ("FAILURES " + failures));
         System.exit(failures);

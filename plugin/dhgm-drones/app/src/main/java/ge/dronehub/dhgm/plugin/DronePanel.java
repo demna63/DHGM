@@ -319,6 +319,8 @@ public class DronePanel {
 
         String extra = t.satellites != null ? " (" + t.satellites + ")" : "";
         if (t.rssiDbm != null) extra += " · RSSI " + t.rssiDbm + "dBm";
+        String rc = t.rcLinkLabel();
+        if (rc != null) extra += " · " + rc;
         String mode = t.flightMode == null || t.flightMode.isEmpty() ? "—" : t.flightMode;
         String gps = t.gpsFix == null || t.gpsFix.isEmpty() ? "—" : t.gpsFix;
         modegps.setText(pluginContext.getString(R.string.dhgm_card_modegps, mode, gps, extra));
