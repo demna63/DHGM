@@ -7,7 +7,21 @@ apply plugin: 'atak-takdev-plugin'
 buildscript {
     // ვერსია VERSION ფაილს მიჰყვება — CI -PdhgmVersion-ით გადმოსცემს (release/tag).
     // ლოკალური build-ისთვის fallback; ხელით ბამპი აქ აღარ საჭიროა.
-    ext.PLUGIN_VERSION = project.hasProperty('dhgmVersion') ? project.dhgmVersion : "0.2.0"
+    ext.PLUGIN_VERSION = project.hasProperty('dhgmVersion') ? project.dhgmVersion : "0.3.0"
+    // versionCode = MAJOR*10000 + MINOR*100 + PATCH (0.3.1 → 301) — ყოველ release-ი
+    // მონოტონურად იზრდება, Android/Plugin Management update-ს სწორად აღმოაჩენს.
+    // ≥ 3 (0.2.x-ის hardcode-ი 2 იყო) — downgrade-ისგან დაცვა.
+    ext.PLUGIN_VERSION_CODE = { String v ->
+        def m = (v =~ /^(\d+)\.(\d+)\.(\d+)/)
+        if (!m.find()) {
+            throw new GradleException("dhgmVersion '${v}' is not MAJOR.MINOR.PATCH")
+        }
+        int major = m.group(1) as int, minor = m.group(2) as int, patch = m.group(3) as int
+        if (minor > 99 || patch > 99) {
+            throw new GradleException("dhgmVersion '${v}': MINOR/PATCH must be <= 99")
+        }
+        return Math.max(3, major * 10000 + minor * 100 + patch)
+    }.call(PLUGIN_VERSION)
     // ⚠️ plugin-api version ზუსტად app-ის ATAK_VERSION-ს უნდა ემთხვეოდეს (subminor-ის გარეშე):
     // app: com.atakmap.app@4.6.0.CIV → plugin-იც 4.6.0 (არა 4.6.0.5) — თორემ Incompatible.
     ext.ATAK_VERSION = "4.6.0"
@@ -61,7 +75,7 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 2
+        versionCode PLUGIN_VERSION_CODE
         versionName PLUGIN_VERSION
     }
 

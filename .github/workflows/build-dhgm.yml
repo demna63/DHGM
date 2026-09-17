@@ -41,16 +41,19 @@ jobs:
           df -h /
 
       - name: Set up JDK 8 (Temurin)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '8'
 
       - name: Checkout DHGM (overlay)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Bridge unit tests
         run: cd bridge && python3 -m unittest discover -s tests
+
+      - name: Plugin JVM tests (BridgeTcpClient, HostPortParser)
+        run: bash tools/run-plugin-jvm-tests.sh
 
       - name: Generate brand assets (icons + splash)
         run: |
@@ -72,6 +75,10 @@ jobs:
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             V="${GITHUB_REF#refs/tags/v}"
+            FILE_V="$(tr -d '[:space:]' < VERSION)"
+            if [[ "$FILE_V" != "$V" ]]; then
+              echo "::warning::VERSION ($FILE_V) != tag (v$V) — tag-ის ვერსია გამოიყენება; release-ისთვის: tools/release.sh $V"
+            fi
           else
             V="$(tr -d '[:space:]' < VERSION)"
           fi

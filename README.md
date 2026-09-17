@@ -81,26 +81,41 @@ ATAK plugin SDK-ზე — ეს არის „ჩემზე მორგ�
   რომელიც CoT-ში არ ეტევა (mode, GPS fix, RSSI).
 - დრონზე tap → follow რეჟიმი, ტრაექტორიის კვალი (breadcrumbs).
 
-### ფაზა 3 — bridge-ის ინტეგრაცია GCS-ში (🚧 მუშაში)
+### ფაზა 3 — bridge-ის ინტეგრაცია GCS-ში ✅
 
-`CotForwarder` C++ მოდული DroneHub-GCS-ის `custom/src/`-ში (`dhgm-cotforwarder` branch):
-Settings → Telemetry → **„DHGM-ზე გადაცემა"** — CoT multicast + plugin TCP JSON, Python bridge-ის გარეშე.
+`CotForwarder` C++ მოდული DroneHub-GCS-ის `custom/src/`-ში: Settings → **„DHGM-ზე გადაცემა"** —
+CoT multicast (`239.2.3.1:6969`) + plugin TCP JSON (`:14550`, 1 Hz `bridge_heartbeat`), Python bridge-ის გარეშე.
+პანელზე host = Mac-ის LAN IP:14550.
+
+⚠️ **ერთ წყარო**: GCS-ის „DHGM-ზე გადაცემა" **ან** Python bridge — ორივე ერთდროულად იგივე
+`DHGM.<sysid>` uid-ს ქმნის და მარკერი ორ წყაროს შორის ხტუნავს (bridge ამას stderr-ზე ატყობინებს).
 
 ---
+
+## Release
+
+```bash
+tools/release.sh 0.3.1     # ტესტებ → VERSION → commit → tag v0.3.1 → push → CI → GitHub Release
+```
 
 ## სტრუქტურა
 
 ```
 DHGM/
-├── README.md            ← ეს ფაილი
-├── CLAUDE.md            ← AI-აგენტის კონტექსტი (GCS-ის სტილით)
-├── bridge/              ← ★ ფაზა 0 — მუშა კოდი
-│   ├── dhgm_bridge.py   ← MAVLink → CoT bridge (pymavlink; CoT stdlib-ით)
-│   └── tests/test_cot.py
-├── tools/
-│   └── bootstrap-atak.sh ← ATAK-CIV კლონირება + წინაპირობების შემოწმება
-├── docs/
-└── atak/                ← ATAK-CIV წყარო (gitignored; ფაზა 1)
+├── README.md · CLAUDE.md · VERSION
+├── bridge/                    MAVLink → CoT + plugin TCP JSON (Python)
+│   ├── dhgm_bridge.py         CoT, SIM, duplicate-source monitor
+│   ├── plugin_tcp.py          TCP hub (hello/heartbeat, backpressure)
+│   ├── plugin_json.py         JSON სქემა (telemetry/hello/heartbeat/gone)
+│   └── tests/                 unittest (CoT, JSON, regressions)
+├── plugin/dhgm-drones/        ATAK plugin — დრონების პანელი
+│   ├── app/src/main/java/…    BridgeTcpClient, HostPortParser, DronePanel, DroneTrails, …
+│   └── jvmtest/               pure-Java ტესტებ (tools/run-plugin-jvm-tests.sh)
+├── custom/                    overlay (values-ka, brand, Permissions.java) + keys (gitignored)
+├── tools/                     bootstrap/overlay/icons/keystore/release/tests
+├── docs/                      usage, smoke-test, phase2-drone-panel, distribution
+├── .github/workflows/         build-dhgm.yml (APK + Release), pages.yml
+└── atak/                      ATAK-CIV წყარო (gitignored)
 ```
 
 ## კავშირი ეკოსისტემასთან

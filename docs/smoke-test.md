@@ -77,12 +77,21 @@ cd bridge && python3 dhgm_bridge.py --sim
 
 ## 6. Plugin TCP (ფაზა 2a — bridge მხარე)
 
+წყარო — **ერთ-ერთი**: DroneHub GCS → Settings → „DHGM-ზე გადაცემა" (Plugin TCP 14550) **ან**:
+
 ```bash
-python3 bridge/dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550
-nc 127.0.0.1 14550   # JSON ხაზები: bridge_hello, telemetry
+python3 bridge/dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550   # stderr: „პანელის host: <IP>:14550"
+nc <Mac-IP> 14550   # JSON: bridge_hello (პირველი), telemetry, bridge_heartbeat (1 Hz)
 ```
 
-Plugin UI ჯერ skeleton-ია — ATAK-ში პანელი ფაზა 2b-ში ჩაირთვება.
+| # | შემოწმება | მოსალოდნელი |
+|---|-----------|-------------|
+| 6.1 | პანელ → host `<Mac-IP>:14550` → დაკავშირება | „დაკავშირებულია · N დრონი" / „ველოდები ტელემეტრიას…" |
+| 6.2 | დრონის გარეშე 30 წმ | კავშირი **არ** წყდება (heartbeat) |
+| 6.3 | bridge/GCS forwarding გამორთე | ≤ 5 წმ-ში „კავშირი გაწყდა (…) · ხელახლა N წმ-ში" |
+| 6.4 | ისევ ჩართე | auto-reconnect, ბარათებ ბრუნდებიან |
+| 6.5 | პანელი დახურე, follow ჩართულ | რუკა ფონზეც მიჰყვება დრონს |
+| 6.6 | host `x:999999` | ATAK **არ** იხურება; port → 14550 |
 
 ## 7. რეგრესია — უარყოფითი
 

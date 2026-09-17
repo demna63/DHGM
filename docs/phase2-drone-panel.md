@@ -1,6 +1,6 @@
 # ფაზა 2 — DHGM დრონის პანელი
 
-> სტატუსი: **✅ MVP + Phase 2b დასრულებული** (2026-07-04) — plugin ცოცხლად მუშაობს ტაბლეტზე.
+> სტატუსი: **✅ ფაზა 2 + 3 დასრულებული** (v0.3.0) — plugin ცოცხლად მუშაობს; წყარო: GCS CotForwarder ან Python bridge.
 > ეს დოკუმენტი UI/UX + პროტოკოლის სპეციფიკაციაა; კოდი `plugin/dhgm-drones/`-შია.
 
 ## რა მუშაობს (v0.2.0)
@@ -157,44 +157,36 @@ RSSI:           -72 dBm
 - `--plugin-tcp :14550` (ცარიელი host) → `0.0.0.0` bind + Mac-ის LAN IP stderr-ზე.
 - plugin: კავშირი plugin-ის lifecycle-ზეა (dropdown-ის დახურვა არ წყვეტს) — follow/heading/trail ფონზე მუშაობს.
 
-## Plugin სტრუქტურა (დაგეგმილი)
+## Plugin სტრუქტურა (v0.3.0)
 
 ```
-plugin/
-└── dhgm-drones/
-    ├── plugin.xml              ← ATAK plugin descriptor
-    ├── build.gradle
-    └── src/main/
-        ├── java/ge/dronehub/dhgm/plugin/
-        │   ├── DhgmDronesLifecycle.java
-        │   ├── DronePanelDropDown.java    ← UI
-        │   ├── BridgeTcpClient.java       ← JSON stream
-        │   └── DroneFollowManager.java
-        └── res/
-            ├── layout/drone_panel.xml
-            ├── layout/drone_card.xml
-            └── values-ka/strings.xml
+plugin/dhgm-drones/
+├── app/src/main/
+│   ├── assets/plugin.xml
+│   ├── java/ge/dronehub/dhgm/
+│   │   ├── DhgmDronesMapComponent.java        ← DropDown receiver-ის რეგისტრაცია
+│   │   └── plugin/
+│   │       ├── DhgmDronesLifecycle.java       ← plugin lifecycle
+│   │       ├── DhgmDronesTool.java            ← toolbar: „დრონები"
+│   │       ├── DhgmChatTool.java              ← toolbar: contact list / GeoChat
+│   │       ├── DhgmDronesDropDownReceiver.java← პანელი + კავშირის lifecycle (plugin-scoped)
+│   │       ├── BridgeTcpClient.java           ← TCP JSON, timeout 5 წმ, backoff 1→10 წმ
+│   │       ├── HostPortParser.java            ← host:port (pure Java)
+│   │       ├── DronePanel.java                ← ბარათებ, follow, marker style, session-ებ
+│   │       ├── DroneTelemetry.java            ← JSON → model
+│   │       └── DroneTrails.java               ← capped breadcrumb polyline
+│   └── res/ (layout/drone_panel|drone_card, values[-ka]/strings, colors)
+└── jvmtest/src/                               ← PluginJvmTests + Log stub
 ```
-
-## იმპლემენტაციის ეტაპები
-
-| # | ეტაპი | დამოკიდებულება |
-|---|-------|----------------|
-| 1 | Bridge `--plugin-tcp` + JSON emit | ფაზა 0 |
-| 2 | Plugin scaffold + `plugin.xml` | ATAK SDK build |
-| 3 | `BridgeTcpClient` + mock data | ეტაპი 1–2 |
-| 4 | `DronePanelDropDown` UI (ka) | დიზაინ ტოკენები |
-| 5 | Follow + breadcrumbs | ATAK Map API |
-| 6 | პარამეტრები (host/port) | plugin preferences |
 
 ## მინიმალური მიღების კრიტერიუმები (MVP)
 
-- [ ] 2+ დრონი სიაში `--sim` რეჟიმში
-- [ ] ქართული UI პანელში
-- [ ] tap → რუკაზე ცენტრირება
-- [ ] follow ერთ დრონზე
-- [ ] stale დრონი ვიზუალურად განსხვავდება
-- [ ] bridge გათიშვისას „არ არის დაკავშირებული" მდგომარეობა
+- [x] 2+ დრონი სიაში `--sim` რეჟიმში
+- [x] ქართული UI პანელში
+- [x] tap → რუკაზე ცენტრირება
+- [x] follow ერთ დრონზე (ფონზეც, v0.3.0)
+- [x] stale დრონი ვიზუალურად განსხვავდება
+- [x] bridge გათიშვისას „კავშირი გაწყდა · ხელახლა N წმ-ში" მდგომარეობა
 
 ## გარე ბმულები
 
