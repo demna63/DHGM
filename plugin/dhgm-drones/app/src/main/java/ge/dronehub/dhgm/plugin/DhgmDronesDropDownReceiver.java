@@ -38,7 +38,6 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
             "ge.dronehub.dhgm.plugin.SHOW_DRONES";
 
     private static final String PREF_HOST = "dhgm_bridge_host";
-    static final int DEFAULT_PORT = 14550;
 
     private final Context pluginContext;
     private final View panelView;
@@ -69,57 +68,6 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
         connectTo(saved);
     }
 
-    /** host:port-ის პარსინგის შედეგი (immutable). */
-    static final class HostPort {
-        final String host;
-        final int port;
-
-        HostPort(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-
-        @Override
-        public String toString() {
-            return host + ":" + port;
-        }
-    }
-
-    /**
-     * {@code host[:port]} → {@link HostPort}; null თუ host ცარიელია.
-     * არავალიდურ/დიაპაზონის გარეთ port → {@link #DEFAULT_PORT}.
-     */
-    static HostPort parseHostPort(String text) {
-        if (text == null) return null;
-        String t = text.trim();
-        String host = t;
-        int port = DEFAULT_PORT;
-        int colon = t.lastIndexOf(':');
-        if (colon >= 0) {
-            host = t.substring(0, colon).trim();
-            port = parsePort(t.substring(colon + 1), DEFAULT_PORT);
-        }
-        return host.isEmpty() ? null : new HostPort(host, port);
-    }
-
-    /**
-     * TCP port-ის ვალიდური პარსინგი.
-     *
-     * <p>დიაპაზონის გარეთ port ({@code InetSocketAddress}-ზე {@link IllegalArgumentException})
-     * reader thread-ზე uncaught-ი იყო და მთელ ATAK პროცესს ხურავდა.
-     *
-     * @return port [1, 65535] ან {@code fallback}, თუ ტექსტი არავალიდურია.
-     */
-    static int parsePort(String text, int fallback) {
-        if (text == null) return fallback;
-        try {
-            int p = Integer.parseInt(text.trim());
-            return (p >= 1 && p <= 65535) ? p : fallback;
-        } catch (NumberFormatException e) {
-            return fallback;
-        }
-    }
-
     /** (ხელახლა) დაკავშირება; ცარიელ host → idle სტატუსი, კავშირის გარეშე. */
     private void connectTo(String text) {
         if (bridgeClient != null) {
@@ -127,7 +75,7 @@ public class DhgmDronesDropDownReceiver extends DropDownReceiver
             bridgeClient = null;
         }
         final int sessionId = ++sessionCounter;
-        final HostPort hp = parseHostPort(text);
+        final HostPortParser.HostPort hp = HostPortParser.parse(text);
         if (hp == null) {
             prefs.edit().remove(PREF_HOST).apply();
             connTcp.setText(pluginContext.getString(R.string.dhgm_conn_tcp, "—"));

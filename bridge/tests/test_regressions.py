@@ -225,3 +225,36 @@ class TestHaeAndHello(unittest.TestCase):
 
         self.assertEqual(json.loads(bridge_heartbeat_line(12.3456)),
                          {"type": "bridge_heartbeat", "ts": 12.346})
+
+
+class TestDuplicateSource(unittest.TestCase):
+    """იგივე DHGM.<sysid>-ის მეორე CoT წყაროს აღმოჩენა (GCS CotForwarder + bridge)."""
+
+    def _state(self):
+        st = DroneState(4)
+        st.lat, st.lon, st.alt_msl, st.groundspeed, st.heading = 41.7, 44.8, 500.0, 5.0, 10.0
+        return st
+
+    def test_own_event_not_foreign(self):
+        from dhgm_bridge import cot_event, foreign_dhgm_sysid
+
+        data = cot_event(self._state(), 1.0, 10.0, instance="me-1")
+        self.assertIsNone(foreign_dhgm_sysid(data, "me-1"))
+
+    def test_other_instance_or_untagged_is_foreign(self):
+        from dhgm_bridge import cot_event, foreign_dhgm_sysid
+
+        self.assertEqual(foreign_dhgm_sysid(cot_event(self._state(), 1.0, 10.0, instance="other"), "me-1"), 4)
+        self.assertEqual(foreign_dhgm_sysid(cot_event(self._state(), 1.0, 10.0), "me-1"), 4)
+
+    def test_non_dhgm_event_ignored(self):
+        from dhgm_bridge import foreign_dhgm_sysid
+
+        self.assertIsNone(foreign_dhgm_sysid(b'<event uid="ANDROID-123" type="a-f-G-U-C"/>', "me-1"))
+
+    def test_source_tag_is_valid_xml_and_escaped(self):
+        import xml.etree.ElementTree as ET
+        from dhgm_bridge import SOURCE_TAG, cot_event
+
+        root = ET.fromstring(cot_event(self._state(), 1.0, 10.0, instance='a"<b'))
+        self.assertEqual(root.find("detail/" + SOURCE_TAG).get("instance"), 'a"<b')

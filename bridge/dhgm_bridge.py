@@ -16,6 +16,9 @@
 
 import argparse
 import math
+import os
+import re
+import struct
 import socket
 import sys
 import threading
@@ -95,8 +98,20 @@ def _cot_time(t: float) -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(t)) + (".%02dZ" % int((t % 1) * 100))
 
 
-def cot_event(state: DroneState, now: float, stale_s: float, prefix: str = "DH") -> bytes:
-    """აწყობს CoT 2.0 event XML-ს ერთი დრონისთვის."""
+#: CoT-ის <detail>-ში bridge-ის instance-ის ტეგი — იგივე multicast-ზე მეორე წყარო
+#: (GCS CotForwarder / მეორე bridge) იგივე uid-ით ამ ტეგის გარეშე ჩანს.
+SOURCE_TAG = "__dhgm_source"
+_UID_RE = re.compile(rb'uid="DHGM\.(\d+)"')
+
+
+def cot_event(state: DroneState, now: float, stale_s: float, prefix: str = "DH",
+              instance: Optional[str] = None) -> bytes:
+    """აწყობს CoT 2.0 event XML-ს ერთი დრონისთვის.
+
+    ``instance`` — ამ bridge-ის id; ``<__dhgm_source instance=…/>``-ად ჩაიდება, რომ
+    :func:`foreign_dhgm_sysid` სკოპ multicast-ზე ჩვენ/სხვის event-ებს გაარჩიოს
+    (ATAK უცნობ detail-ებს იგნორირავს).
+    """
     callsign = "%s-%d" % (prefix, state.sysid)
     uid = "DHGM.%d" % state.sysid
     hae = state.hae
@@ -118,6 +133,7 @@ def cot_event(state: DroneState, now: float, stale_s: float, prefix: str = "DH")
         '<track speed="%.2f" course="%.1f"/>'
         '<precisionlocation geopointsrc="GPS" altsrc="GPS"/>'
         "<remarks>%s</remarks>"
+        "%s"
         "</detail>"
         "</event>"
     ) % (
@@ -134,6 +150,7 @@ def cot_event(state: DroneState, now: float, stale_s: float, prefix: str = "DH")
         state.speed,
         state.course,
         escape(remarks),
+        ("<%s instance=%s/>" % (SOURCE_TAG, quoteattr(instance))) if instance else "",
     )
     return xml.encode("utf-8")
 
@@ -264,6 +281,74 @@ def sim_step(st: DroneState, t0: float, index: int = 0) -> None:
     st.last_seen = time.time()
 
 
+def foreign_dhgm_sysid(datagram: bytes, instance: str) -> Optional[int]:
+    """DHGM.<sysid> CoT, რომელიც **ამ** bridge-ის instance-ის ტეგის გარეშეა → sysid; სხვა → None.
+
+    pure — ტესტირებადი; ``datagram`` multicast-იდან მიღებულ ნედლ ბაიტებია.
+    """
+    m = _UID_RE.search(datagram)
+    if m is None:
+        return None
+    own = ("<%s instance=%s/>" % (SOURCE_TAG, quoteattr(instance))).encode("utf-8")
+    if own in datagram:
+        return None
+    return int(m.group(1))
+
+
+class ForeignSourceMonitor:
+    """multicast-ზე იგივე ``DHGM.<sysid>`` uid-ის მეორე CoT წყაროს აღმოჩენა.
+
+    GCS-ის native CotForwarder + Python bridge ერთდროულად → ATAK-ში ერთ მარკერი
+    ორ წყაროს შორის „ხტუნავს". monitor-ი stderr-ზე გაფრთხილებას ბეჭდავს (sysid-ზე
+    ≤ 1/60 წმ). best-effort: bind ვერ მოხერხდა → ჩუმად გამოირთვება.
+    """
+
+    WARN_INTERVAL_S = 60.0
+
+    def __init__(self, group: str, port: int, instance: str,
+                 active_sysids: Callable[[], Set[int]]):
+        self._instance = instance
+        self._active = active_sysids
+        self._last_warn: Dict[int, float] = {}
+        self._sock: Optional[socket.socket] = None
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if hasattr(socket, "SO_REUSEPORT"):
+                try:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                except OSError:
+                    pass
+            s.bind(("", port))
+            mreq = struct.pack("4s4s", socket.inet_aton(group), socket.inet_aton("0.0.0.0"))
+            s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            s.settimeout(1.0)
+            self._sock = s
+        except OSError as e:
+            print("[dhgm] (info) duplicate-source monitor off: %s" % e, file=sys.stderr)
+            return
+        threading.Thread(target=self._loop, name="cot-monitor", daemon=True).start()
+
+    def _loop(self) -> None:
+        assert self._sock is not None
+        while True:
+            try:
+                data, addr = self._sock.recvfrom(65535)
+            except socket.timeout:
+                continue
+            except OSError:
+                return
+            sysid = foreign_dhgm_sysid(data, self._instance)
+            if sysid is None or sysid not in self._active():
+                continue
+            now = time.time()
+            if now - self._last_warn.get(sysid, 0.0) >= self.WARN_INTERVAL_S:
+                self._last_warn[sysid] = now
+                print("[dhgm] ⚠ DHGM.%d-ს სხვა წყაროც აგზავნის (%s) — ATAK-ში მარკერი ორ "
+                      "წყაროს შორის ხტუნავს. დატოვე ერთი: GCS-ის „DHGM-ზე გადაცემა“ ან "
+                      "ეს bridge." % (sysid, addr[0]), file=sys.stderr)
+
+
 def _lan_ipv4s() -> List[str]:
     """ლოკალურ LAN IPv4-ებ (hint-ისთვის; ქსელ ტრაფიკ არ იგზავნება — UDP connect)."""
     ips: List[str] = []
@@ -303,6 +388,7 @@ def main() -> int:
     if not args.no_multicast:
         targets.insert(0, DEFAULT_MULTICAST)
     sender = CotSender(targets, dry_run=args.dry_run)
+    instance = "%s-%d-%d" % (socket.gethostname(), os.getpid(), int(time.time()))
     states: Dict[int, DroneState] = {}
     states_lock = threading.Lock()
     t0 = time.time()
@@ -310,6 +396,11 @@ def main() -> int:
                              telemetry_line)
 
     active_sysids: Set[int] = set()
+    if not args.dry_run and not args.no_multicast:
+        group, _, mport = DEFAULT_MULTICAST.rpartition(":")
+        # active_sysids — reference-ი tick-ზე ატომურად იცვლება (იხ. hello_line)
+        ForeignSourceMonitor(group, int(mport), instance, lambda: active_sysids)
+
     plugin_hub = None
     if args.plugin_tcp and not args.dry_run:
         from plugin_tcp import PluginTcpHub
@@ -354,7 +445,7 @@ def main() -> int:
                 for st in states.values():
                     if st.has_fix and now - st.last_seen < args.stale:
                         current_active.add(st.sysid)
-                        outgoing.append((cot_event(st, now, args.stale, args.prefix),
+                        outgoing.append((cot_event(st, now, args.stale, args.prefix, instance),
                                          telemetry_line(st, now, args.prefix) if plugin_hub else None))
             for cot, line in outgoing:
                 sender.send(cot)

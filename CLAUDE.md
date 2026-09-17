@@ -45,6 +45,10 @@ DHGM/
 - `gen-icons.py` — `custom/brand/dhgm-logo.svg` → `drawable-*` ხატულები (cairosvg).
 - `gen-keystore.sh` — signing keystore გენერაცია.
 - `extract-untranslated.py` — უთარგმნელი სტრინგების სია values-ka-სთვის.
+- `run-plugin-jvm-tests.sh` — plugin-ის pure-Java ტესტებ (`BridgeTcpClient`, `HostPortParser`;
+  javac + Log stub, ATAK SDK-ის გარეშე). CI-ში bridge-ის ტესტებთან ერთად ეშვევა.
+- `release.sh X.Y.Z` — ტესტებ → `VERSION` → commit → tag `vX.Y.Z` → push → CI Release.
+  plugin versionCode = `X*10000+Y*100+Z` (`app/build.gradle`).
 
 ## Build (APK) — მხოლოდ CI-ზე
 ATAK-ის native ჯაჭვი (NDK r12b, takthirdparty, conan) **Linux-only**-ია → macOS-ზე
@@ -78,6 +82,10 @@ ATAK core ფაილს პირდაპირ (repo-ში) **არ** ვ�
 - CoT გენერაცია pure ფუნქციებში (`cot_event`) — ტესტირებადი, ქსელისგან გამიჯნული.
 - დრონის CoT ტიპი: `a-f-A-M-F-Q` (friendly UAV); uid `DHGM.<sysid>`; callsign `DH-<sysid>`.
 - MAVLink sysid 250+ და 0 იგნორირდება (GCS/broadcast).
+- ⚠️ VM/sandbox-ში git-ი exec-bit-ს კარგავს → repo-ში `core.fileMode=false`; ახალ `.sh`-ზე
+  `git update-index --chmod=+x`, CI-ში სკრიპტებ `bash tools/…`-ით. (v0.3.0-ის CI ჩავარდა 126-ით.)
+- TCP JSON წყარო — **ერთ**: GCS CotForwarder **ან** bridge; ორივე = uid-კოლიზია (bridge monitor ატყობინებს).
+- plugin ↔ წყარო: 1 Hz `bridge_heartbeat` სავალდებულოია (plugin read timeout 5 წმ).
 
 ## დომენური კონტექსტი
 - მომხმარებელი PX4/ArduPilot-ს და MAVLink-ს კარგად იცნობს — ბაზისური ახსნა არ სჭირდება.
