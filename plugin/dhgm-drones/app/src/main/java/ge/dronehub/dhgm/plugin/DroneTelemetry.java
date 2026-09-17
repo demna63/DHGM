@@ -18,7 +18,8 @@ public class DroneTelemetry {
     public double courseDeg;
     public Integer batteryPct;  // % (nullable)
     public Integer satellites;  // nullable
-    public Integer rssiDbm;     // nullable
+    public Integer rssiDbm;     // telemetry radio RSSI, dBm (nullable)
+    public Integer rcRssiPct;   // RC link RSSI/LQ, 0..100 % (nullable) — ELRS/CRSF LQ
     public String flightMode = "";
     public String gpsFix = "";
     public double ts;           // bridge timestamp (წმ)
@@ -41,11 +42,23 @@ public class DroneTelemetry {
         t.batteryPct = o.has("battery_pct") ? o.optInt("battery_pct") : null;
         t.satellites = o.has("satellites") ? o.optInt("satellites") : null;
         t.rssiDbm = o.has("rssi_dbm") ? o.optInt("rssi_dbm") : null;
+        t.rcRssiPct = o.has("rc_rssi_pct") ? clampPct(o.optInt("rc_rssi_pct", -1)) : null;
         t.flightMode = o.optString("flight_mode", "");
         t.gpsFix = o.optString("gps_fix", "");
         t.ts = o.optDouble("ts", 0);
         t.rxAtMs = System.currentTimeMillis();
         return t;
+    }
+
+    /** 0..100 % ან null (არავალიდური). */
+    static Integer clampPct(int v) {
+        return (v >= 0 && v <= 100) ? v : null;
+    }
+
+    /** RC link-ის ტექსტ ბარათისთვის: „RC 87%", &lt; 30% → „⚠ RC 25%"; null თუ უცნობია. */
+    public String rcLinkLabel() {
+        if (rcRssiPct == null) return null;
+        return (rcRssiPct < 30 ? "⚠ RC " : "RC ") + rcRssiPct + "%";
     }
 
     /** ბატარეის მდგომარეობა ფერისთვის: 2=კარგი, 1=გაფრთხილება, 0=კრიტიკული, -1=უცნობი. */

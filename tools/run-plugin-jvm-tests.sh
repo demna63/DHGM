@@ -15,6 +15,8 @@ command -v javac >/dev/null || { echo "✗ javac არ მოიძებნა
 javac -encoding UTF-8 -Xlint:all -d "$OUT" \
   "$SRC/BridgeTcpClient.java" \
   "$SRC/HostPortParser.java" \
+  "$SRC/DroneTelemetry.java" \
+  "$TEST/org/json/JSONObject.java" \
   "$TEST/com/atakmap/coremap/log/Log.java" \
   "$TEST/ge/dronehub/dhgm/plugin/PluginJvmTests.java"
 

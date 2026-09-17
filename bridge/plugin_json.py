@@ -49,6 +49,8 @@ def telemetry_payload(state: DroneState, now: float, prefix: str = "DH") -> Opti
         obj["satellites"] = int(state.satellites)
     if state.rssi_dbm is not None:
         obj["rssi_dbm"] = int(state.rssi_dbm)
+    if state.rc_rssi_pct is not None:
+        obj["rc_rssi_pct"] = int(state.rc_rssi_pct)
     return obj
 
 

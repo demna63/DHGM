@@ -123,9 +123,16 @@ RSSI:           -72 dBm
   "flight_mode": "AUTO",
   "gps_fix": "3D",
   "satellites": 12,
-  "rssi_dbm": -72
+  "rssi_dbm": -72,
+  "rc_rssi_pct": 87
 }
 ```
+
+- `rssi_dbm` — telemetry radio (SiK `RADIO_STATUS`), dBm; GCS-იდან `telemetryLRSSI`.
+- `rc_rssi_pct` — RC link, `RC_CHANNELS.rssi` → 0..100 % (255 = არ იგზავნება). ExpressLRS/CRSF:
+  PX4 — LQ; ArduPilot — RSSI, ან LQ თუ `RC_OPTIONS` bit 10 („Use LQ instead of normalised RSSI").
+  ბარათზე „RC 87%", < 30% → „⚠ RC 25%".
+
 
 ### `drone_gone` (stale timeout შემდეგ)
 
