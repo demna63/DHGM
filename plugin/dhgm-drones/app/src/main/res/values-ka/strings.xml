@@ -4,7 +4,7 @@
     <string name="dhgm_drones_summary">DroneHub ცოცხალი ტელემეტრიის პანელი</string>
     <string name="dhgm_chat_title">ჩატი</string>
     <string name="dhgm_chat_summary">Mesh ჩატი (GeoChat) — ერთ ქსელზე მყოფ მოწყობილობებს შორის</string>
-    <string name="dhgm_bridge_disconnected">Bridge არ არის დაკავშირებული (127.0.0.1:14550)</string>
+    <string name="dhgm_bridge_disconnected">Bridge არ არის დაკავშირებული</string>
     <string name="dhgm_bridge_line">Bridge: %1$s</string>
     <string name="dhgm_bridge_connected">დაკავშირებულია · %1$d დრონი</string>
     <string name="dhgm_bridge_waiting">დაკავშირებულია · ველოდები ტელემეტრიას…</string>
@@ -18,4 +18,6 @@
     <string name="dhgm_conn_title">DGGCS კავშირი</string>
     <string name="dhgm_conn_multicast">რუკა · SA multicast  239.2.3.1:6969</string>
     <string name="dhgm_conn_tcp">პანელი · TCP  %1$s</string>
+    <string name="dhgm_bridge_retrying">კავშირი გაწყდა (%1$s) · ხელახლა %2$d წმ-ში…</string>
+    <string name="dhgm_host_required">შეიყვანე bridge-ის (Mac-ის) IP:port, მაგ. 192.168.1.243:14550. 127.0.0.1 მხოლოდ adb reverse-ით მუშაობს.</string>
 </resources>

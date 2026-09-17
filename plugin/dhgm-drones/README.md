@@ -18,9 +18,10 @@ ATAK-CIV plugin SDK-ზე დაფუძნებული მოდული 
 
 ```bash
 # bridge JSON stream
-cd bridge && python3 dhgm_bridge.py --sim --plugin-tcp 127.0.0.1:14550
+cd bridge && python3 dhgm_bridge.py --sim --plugin-tcp 0.0.0.0:14550
 
-# plugin (ATAK build-ის შემდეგ) უკავშირდება localhost:14550
+# plugin: პანელზე host = Mac-ის LAN IP:14550 (bridge stderr-ზე ბეჭდავს)
+# USB-ით LAN-ის გარეშე: adb reverse tcp:14550 tcp:14550 → host = 127.0.0.1:14550
 ```
 
 ## სტრუქტურა

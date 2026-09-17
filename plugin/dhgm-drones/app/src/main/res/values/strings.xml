@@ -4,7 +4,7 @@
     <string name="dhgm_drones_summary">DroneHub live telemetry panel</string>
     <string name="dhgm_chat_title">Chat</string>
     <string name="dhgm_chat_summary">Mesh chat (GeoChat) between devices on the LAN</string>
-    <string name="dhgm_bridge_disconnected">Bridge not connected (127.0.0.1:14550)</string>
+    <string name="dhgm_bridge_disconnected">Bridge not connected</string>
     <string name="dhgm_bridge_line">Bridge: %1$s</string>
     <style name="ATAKPluginTheme" parent="@android:style/Theme.Holo.NoActionBar" />
     <string name="dhgm_bridge_connected">Connected · %1$d drone(s)</string>
@@ -19,4 +19,6 @@
     <string name="dhgm_conn_title">DGGCS connection</string>
     <string name="dhgm_conn_multicast">Map · SA multicast  239.2.3.1:6969</string>
     <string name="dhgm_conn_tcp">Panel · TCP  %1$s</string>
+    <string name="dhgm_bridge_retrying">Connection lost (%1$s) · retrying in %2$d s…</string>
+    <string name="dhgm_host_required">Enter the bridge (Mac) IP:port, e.g. 192.168.1.243:14550. 127.0.0.1 works only with adb reverse.</string>
 </resources>

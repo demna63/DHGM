@@ -66,6 +66,12 @@ def bridge_hello_line(drone_sysids: List[int]) -> str:
     )
 
 
+def bridge_heartbeat_line(now: float) -> str:
+    """keepalive (1 Hz) — plugin-ი read timeout-ით „ჩუმად" მკვდარ bridge-ს (Wi-Fi drop,
+    FIN-ის გარეშე) ამ ხაზების არარსებობით აღმოაჩენს, მაშინაც, როცა დრონ არ არის."""
+    return json.dumps({"type": "bridge_heartbeat", "ts": round(now, 3)}, separators=(",", ":"))
+
+
 def drone_gone_line(sysid: int, reason: str = "stale") -> str:
     return json.dumps({"type": "drone_gone", "sysid": sysid, "reason": reason}, separators=(",", ":"))
 

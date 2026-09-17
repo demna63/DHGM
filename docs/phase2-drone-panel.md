@@ -135,9 +135,27 @@ RSSI:           -72 dBm
 
 ### `bridge_hello` (კავშირის დადებისას)
 
+ეგზავნება **ყოველ ახალ კლიენტს**, accept-ისთანავე — ყველა სხვა ხაზამდე.
+
 ```json
 {"type": "bridge_hello", "version": "0.1.0", "drones": [1]}
 ```
+
+### `bridge_heartbeat` (keepalive, 1 Hz / tick)
+
+იგზავნება ყოველ tick-ზე, დრონებ ყონ თუ არა. plugin-ი 5 წმ-ის სიჩუმეს (read timeout)
+კავშირის გაწყვეტად ათვლის და exponential backoff-ით (1→10 წმ) ხელახლა უკავშირდება —
+ასე აღმოჩნდება „ჩუმად" მკვდარ bridge (Wi-Fi drop, FIN-ის გარეშე).
+
+```json
+{"type": "bridge_heartbeat", "ts": 1751600000.12}
+```
+
+### Transport-ის გარანტიებ
+
+- bridge: კლიენტის `sendall` timeout = 0.5 წმ → ჩეჭდილ კლიენტი მოიცილდება, CoT/სხვა კლიენტებ არ ბლოკირდებიან.
+- `--plugin-tcp :14550` (ცარიელი host) → `0.0.0.0` bind + Mac-ის LAN IP stderr-ზე.
+- plugin: კავშირი plugin-ის lifecycle-ზეა (dropdown-ის დახურვა არ წყვეტს) — follow/heading/trail ფონზე მუშაობს.
 
 ## Plugin სტრუქტურა (დაგეგმილი)
 

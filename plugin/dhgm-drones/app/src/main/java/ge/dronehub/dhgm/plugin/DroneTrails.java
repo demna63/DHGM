@@ -96,6 +96,20 @@ public class DroneTrails {
         }
     }
 
+    /** plugin unload: trail-ებ + „DHGM დრონები" group-ი რუკიდან. */
+    public void dispose() {
+        clearAll();
+        try {
+            if (group != null) {
+                MapGroup parent = group.getParentGroup();
+                if (parent != null) parent.removeGroup(group);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "dispose failed: " + e.getMessage());
+        }
+        group = null;
+    }
+
     /** ყველა trail-ის გასუფთავება (გათიშვა/ხელახლა დაკავშირება). */
     public void clearAll() {
         points.clear();

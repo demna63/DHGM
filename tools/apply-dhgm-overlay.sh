@@ -124,7 +124,7 @@ else:
 PY
 
 echo "== 8/9: mount deadlock fix (FileSystemUtils, ATAK PR#329) =="
-FSU=atak/atak/takkernel/engine/src/main/java/com/atakmap/coremap/filesystem/FileSystemUtils.java
+FSU=atak/takkernel/engine/src/main/java/com/atakmap/coremap/filesystem/FileSystemUtils.java
 if [ -f "$FSU" ]; then
   python3 tools/fix-mount-deadlock.py "$FSU"
 else
