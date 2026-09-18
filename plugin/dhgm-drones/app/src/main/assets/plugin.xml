@@ -14,4 +14,9 @@
         type="transapps.maps.plugin.tool.ToolDescriptor"
         impl="ge.dronehub.dhgm.plugin.DhgmChatTool"
         singleton="true" />
+
+    <extension
+        type="transapps.maps.plugin.tool.ToolDescriptor"
+        impl="ge.dronehub.dhgm.plugin.DhgmLanguageTool"
+        singleton="true" />
 </plugin>

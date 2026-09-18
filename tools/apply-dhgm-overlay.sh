@@ -8,15 +8,15 @@ cd "$(dirname "$0")/.."
 [ -d atak/atak ] || { echo "✗ atak/ არ არის დაკლონილი — ჯერ tools/bootstrap-atak.sh"; exit 1; }
 
 if [ -f tools/gen-icons.py ] && [ -f custom/brand/dhgm-logo.svg ]; then
-  echo "== 1/9: brand assets (SVG → PNG) =="
+  echo "== 1/10: brand assets (SVG → PNG) =="
   pip install -q cairosvg pillow 2>/dev/null || true
   python3 tools/gen-icons.py || echo "  ⚠ gen-icons.py ვერ გაეშვა (cairosvg/pillow?)"
 fi
 
-echo "== 2/9: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
+echo "== 2/10: overlay ფაილების კოპირება (custom/overlay/ → atak/) =="
 rsync -a --out-format="  + %n" custom/overlay/atak/ atak/atak/
 
-echo "== 3/9: branding (app label ATAK → DHGM) =="
+echo "== 3/10: branding (app label ATAK → DHGM) =="
 MANIFEST=atak/atak/ATAK/app/src/main/AndroidManifest.xml
 if [ -f "$MANIFEST" ]; then
   if grep -q 'android:icon="@drawable/ic_atak_launcher"' "$MANIFEST"; then
@@ -43,7 +43,7 @@ else
   echo "  ⚠ app_name-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე ხელით: $STRINGS"
 fi
 
-echo "== 4/9: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
+echo "== 4/10: DEVELOPER BUILD წარწერის მოხსნა (civSdk build type) =="
 GRADLE=atak/atak/ATAK/app/build.gradle
 if grep -q "'\"DEVELOPER BUILD\"'" "$GRADLE"; then
   sed -i '' "s|'\"DEVELOPER BUILD\"'|'\"\"'|" "$GRADLE" 2>/dev/null \
@@ -55,7 +55,7 @@ else
   echo "  ⚠ DEV_BANNER-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე: $GRADLE"
 fi
 
-echo "== 5/9: package identity (applicationId + APK სახელი) =="
+echo "== 5/10: package identity (applicationId + APK სახელი) =="
 if grep -q 'applicationId = "com.atakmap.app"' "$GRADLE"; then
   sed -i '' 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE" 2>/dev/null \
     || sed -i 's|applicationId = "com.atakmap.app"|applicationId = "ge.dronehub.dhgm"|' "$GRADLE"
@@ -79,7 +79,7 @@ elif grep -q 'setProperty("archivesBaseName", "DHGM-"' "$GRADLE"; then
   echo "  ✓ archivesBaseName უკვე DHGM-ია"
 fi
 
-echo "== 6/9: სისტემური ზოლების ფერი (status/navigation bar) =="
+echo "== 6/10: სისტემური ზოლების ფერი (status/navigation bar) =="
 STYLES=atak/atak/ATAK/app/src/main/res/values/styles.xml
 if [ -f "$STYLES" ] && ! grep -q 'android:statusBarColor' "$STYLES"; then
   sed -i '' 's|android:navigationBarColor">@android:color/black|android:navigationBarColor">@color/darker_gray|g' "$STYLES" 2>/dev/null \
@@ -93,7 +93,7 @@ elif [ -f "$STYLES" ] && grep -q 'android:statusBarColor' "$STYLES"; then
   echo "  ✓ statusBarColor უკვე დაყენებულია"
 fi
 
-echo "== 7/9: encryption passphrase auto-key (first-run დიალოგის მოხსნა) =="
+echo "== 7/10: encryption passphrase auto-key (first-run დიალოგის მოხსნა) =="
 DBH=atak/atak/ATAK/app/src/main/java/com/atakmap/app/ATAKDatabaseHelper.java
 python3 - "$DBH" <<'PY'
 import sys
@@ -123,7 +123,7 @@ else:
     print("  ⚠ changeKeyImpl(context, true, ksl) ვერ ვიპოვე — upstream შეიცვალა, გადაამოწმე:", p)
 PY
 
-echo "== 8/9: mount deadlock fix (FileSystemUtils, ATAK PR#329) =="
+echo "== 8/10: mount deadlock fix (FileSystemUtils, ATAK PR#329) =="
 FSU=atak/takkernel/engine/src/main/java/com/atakmap/coremap/filesystem/FileSystemUtils.java
 if [ -f "$FSU" ]; then
   python3 tools/fix-mount-deadlock.py "$FSU"
@@ -131,7 +131,7 @@ else
   echo "  ⚠ FileSystemUtils.java ვერ ვიპოვე — გამოტოვებულია"
 fi
 
-echo "== 9/9: ზედმეტი settings-პარამეტრების მოჭრა (DHGM LAN/GCS ნაკადი — TAK server არ სჭირდება) =="
+echo "== 9/10: ზედმეტი settings-პარამეტრების მოჭრა (DHGM LAN/GCS ნაკადი — TAK server არ სჭირდება) =="
 NETPREF=atak/atak/ATAK/app/src/main/res/xml/network_preferences.xml
 if [ -f "$NETPREF" ]; then
   # serverConnections (TAK Servers/streaming) + tadiljSettings (TADIL-J datalink) —
@@ -169,5 +169,8 @@ fi
 # პარამეტრების გახსნისას. guard მათზე მიუმაგრებელ stub Preference-ს აბრუნებს.
 APF=atak/atak/ATAK/app/src/main/java/com/atakmap/android/preference/AtakPreferenceFragment.java
 python3 tools/patch-pref-trim-guard.py "$APF"
+
+echo "== 10/10: აპლიკაციის ენის override (ქართულ ინგლისურ ტელეფონზეც) =="
+python3 tools/patch-locale-override.py atak/atak/ATAK/app/src/main/java
 
 echo "✓ overlay დადებულია"

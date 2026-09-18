@@ -92,6 +92,13 @@ CoT multicast (`239.2.3.1:6969`) + plugin TCP JSON (`:14550`, 1 Hz `bridge_heart
 
 ---
 
+## ენა
+
+DHGM ნაგულისხმევად **ქართულია**, მოწყობილობის locale-ის მიუხედავად: არჩეულ ენა
+(`dhgm_language`: `ka` / `en` / `system`) `attachBaseContext`-ზე იდება
+(`com.atakmap.app.DhgmLocale`, `tools/patch-locale-override.py`). გადართვა:
+toolbar → **„ენა / Language"** (DHGM plugin) → გადატვირთვა.
+
 ## Release
 
 ```bash
