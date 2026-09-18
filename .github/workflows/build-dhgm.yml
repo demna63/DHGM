@@ -305,6 +305,19 @@ jobs:
           fi
           ls -la dist
 
+      # ხელმოწერის გამჭვირვალობა: ერთი და იგივე key + გამოქვეყნებულ checksum-ებ.
+      # Play Protect self-signed APK-ზე მაინც გააფრთხილებს — იხ. docs/distribution.md
+      - name: Verify signing key + checksums
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: sums
+        run: |
+          python3 tools/verify-apk.py dist/*.apk
+          {
+            echo "checksums<<EOF_SUMS"
+            ( cd dist && sha256sum *.apk | awk '{printf "`%s`  \n`%s`\n\n", $2, toupper($1)}' )
+            echo "EOF_SUMS"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release (tag push only)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
@@ -325,6 +338,23 @@ jobs:
 
             იხ. [docs/usage.md](https://github.com/demna63/DHGM/blob/main/docs/usage.md).
 
-            ⚠️ APK-ები ჩვენი self-signed key-ითაა — Play Protect შეიძლება გააფრთხილოს („Install anyway").
+            ## ⚠️ Play Protect-ის გაფრთხილება
+            APK-ებ ჩვენი key-ითაა ხელმოწერილ (Play Store-ში არ ვართ), ამიტომ ინსტალაციისას
+            Play Protect „უცნობ დეველოპერზე" გაფრთხილებას აჩვენებს → **„More details" → „Install anyway"**.
+            ATAK-CIV-ის fork-ებს Play Store-ზე ვერ ავიტანთ (TAK-ის signing/policy), ე.ი. ეს ნორმაა.
+
+            ## ✅ ავთენტურობის შემოწმება
+            ხელმომწერ სერტიფიკატ ყოველ release-ზე იგივეა:
+            `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47`
+            (CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, C=GE)
+
+            ```bash
+            python3 tools/verify-apk.py DHGM-${{ steps.ver.outputs.version }}-app.apk
+            ```
+
+            SHA-256 (ფაილებ):
+
+            ${{ steps.sums.outputs.checksums }}
+            იხ. [docs/distribution.md](https://github.com/demna63/DHGM/blob/main/docs/distribution.md#play-protect).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
