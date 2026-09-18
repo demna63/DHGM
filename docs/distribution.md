@@ -4,21 +4,16 @@
 
 | არხი | სტატუსი | წვდომა |
 |------|---------|--------|
-| **GitHub Releases** | ✅ [v0.1.0](https://github.com/demna63/DHGM/releases) | ⚠️ private repo → მხოლოდ collaborator-ები |
+| **GitHub Releases** | ✅ [v0.4.1](https://github.com/demna63/DHGM/releases) | 🌍 public repo — ყველასთვის |
 | **Landing page** (GitHub Pages) | ✅ [demna63.github.io/DHGM](https://demna63.github.io/DHGM/) | ბრენდირებული download-გვერდი |
 | F-Droid (self-hosted repo) | ⬜ მომავალი | ავტო-განახლება |
 | In-app updater | ⬜ მომავალი | GitHub releases API-ს ამოწმებს |
 
-## ⚠️ Public vs Private — გადასაწყვეტი
+## გავრცელების მოდელი
 
-repo ამჟამად **private-ია.** ეს ნიშნავს:
-- release-ის APK-ებს **მხოლოდ collaborator-ები** ჩამოტვირთავენ (auth საჭირო).
-- Landing page-ის download ლინკები (`releases/latest`) სხვებისთვის **არ იმუშავებს**.
-
-**რეალური საჯარო გავრცელებისთვის** სამი ვარიანტი:
-1. **repo public** — უმარტივესი. კოდიც და APK-ებიც ხელმისაწვდომი (GPL ლიცენზია ისედაც ამას მოითხოვს გავრცელებისას).
-2. **APK-ები ცალკე hosting-ზე** — repo private რჩება, APK-ებს დებ საკუთარ სერვერზე/Drive-ზე, landing page იქითკენ მიმართავს.
-3. **გამოშვება მხოლოდ გუნდისთვის** — private რჩება, collaborator-ებს ამატებ.
+repo **public-ია** — release-ის APK-ებს და კოდს ყველა ხედავს. GPL-ის მოთხოვნაც ესაა
+(ATAK-CIV-ის fork → წყარო გავრცელებასთან ერთად; იხ. `SOURCE_CODE.md`).
+Landing page-ის `releases/latest` ლინკები auth-ის გარეშე მუშაობს.
 
 ## Play Protect
 
@@ -42,7 +37,7 @@ subject:      CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, L=Tbilisi, C=GE
 ჩამოტვირთვის შემდეგ:
 
 ```bash
-python3 tools/verify-apk.py DHGM-0.4.0-app.apk
+python3 tools/verify-apk.py DHGM-0.4.1-app.apk
 #   SHA-256 (ფაილ): …            ← release-ის აღწერას შეადარე
 #   cert SHA-256:   C0FE3B…      ← DHGM-ის key
 #   ✓ DHGM-ის release key
@@ -59,21 +54,46 @@ CI იგივე სკრიპტს release-ამდე უშვებს
   backup სავალდებულოა (offline, დაშიფრულ).
 - key-ის შეცვლისას: `tools/verify-apk.py`-ში `EXPECTED_CERT_SHA256` და ეს დოკუმენტი განაახლე.
 
-### 📋 Android developer verification (2026–2027)
+### 📋 Android developer verification — DHGM-ის გეგმა
 
-Google ითხოვს sideload-ით გავრცელებულ აპების დეველოპერის ვერიფიკაციას:
+Google ითხოვს Android-ზე გავრცელებულ აპების დეველოპერის ვერიფიკაციას (certified devices, Android 7+).
 
-| როდის | სად | რას ნიშნავს DHGM-სთვის |
+| როდის | ვინ/სად | DHGM-სთვის |
 |---|---|---|
-| 2026 სექტ. 30 | ბრაზილია, ინდონეზია, სინგაპური, ტაილანდი | საქართველო არ შედის — გავლენა არ აქვს |
-| 2027+ | გლობალურ (certified Android) | **დასარეგისტრირებელია** |
+| 2026 აგვ. | limited distribution accounts, developer API-ებ, power-user „advanced flow" | ხელმისაწვდომია **ახლა** |
+| 2026 სექტ. 30 | ბრაზილია, ინდონეზია, სინგაპური, ტაილანდი — **მხოლოდ მონაწილე store-ებ** (Play, Galaxy Store, OPPO, HONOR, Palm, V-Appstore, GetApps) | საქართველო არ შედის; პირდაპირ APK-ს ეს ფაზა ისედაც არ ეხება |
+| 2027+ | გლობალურ, ყველა certified Android, sideload-ის ჩათვლით | **რეგისტრაცია სავალდებულოა** |
 
-ვარიანტებ, სანამ 2027 დადგება:
+#### ანგარიშის ტიპ
 
-1. **Android Developer Console** — Play-ის გარეთ გავრცელებულ აპის რეგისტრაცია (package `ge.dronehub.dhgm`
-   + signing cert). ეს DHGM-ის გზაა.
-2. **Limited Distribution account** — უფასო, ID-ის გარეშე, მაგრამ მაქს. **20 მოწყობილობა**
-   (გამოდგება მხოლოდ დახურულ ტესტ-ჯგუფისთვის).
+| | Limited distribution | Full (Android Developer Console) |
+|---|---|---|
+| ფასი | უფასო | $25 ერთჯერადად |
+| ID | არ სჭირდება | government-issued ID |
+| ლიმიტ | **20 მოწყობილობა** | უსაზღვრო |
+| conversion | → full **შეიძლება** | → limited უკან **არა** |
+
+**გადაწყვეტილება:** DroneHub-ის პილოტებისთვის 20 მოწყობილობა ცოტაა → საბოლოო მიზან full account-ია.
+რადგან limited → full ცალმხრივად შესაძლებელია, თანმიმდევრობა ასეთია:
+
+1. **ახლა** — უფასო limited account; package name + signing key დარეგისტრირდეს (ჯავშანი)
+2. **2027-ის enforcement-მდე** — full-ზე გადასვლა ($25 + ID)
+
+#### რეგისტრაციის checklist
+
+- [ ] Android Developer Console — ანგარიშ (იხ. [developer.android.com/developer-verification](https://developer.android.com/developer-verification))
+- [ ] package `ge.dronehub.dhgm` (app) — უნიკალურია, ATAK-ის `com.atakmap.app`-ს არ ეჯახება
+- [ ] package `ge.dronehub.dhgm.plugin` (plugin APK) — ცალკე რეგისტრაცია
+- [ ] signing key: cert SHA-256 `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47`
+      (ერთ package-ზე რამდენიმე key შეიძლება — key rotation-ის გზა ღიაა)
+- [ ] key-ის offline backup — დაკარგვა = ვერც განახლება, ვერც ვერიფიკაცია
+
+#### escape hatch-ებ (თუ რეგისტრაცია დაგვიანდა)
+
+- **ADB install** — ვერიფიკაციას არ ექვემდებარება; საველე ოპერაციებისთვის მუშა გზა
+- **power-user advanced flow** — developer mode → coercion-ის დადასტურება → restart →
+  24-სთ. ლოდინ → biometric/PIN. მუშაობს, მაგრამ production გავრცელებად არ გამოდგება
+- **enterprise/managed** store — enforcement-ის გარეთაა (რეგისტრაცია მაინც რეკომენდებულია)
 
 targetSdk 30-ია, ე.ი. Android 15/16-ის install-ბლოკს (targetSdk < 24) არ ვეხებით; ATAK-ის
 განახლებისას ეს ზღვარიც გადასამოწმებელია.
