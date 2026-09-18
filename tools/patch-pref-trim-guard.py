@@ -27,36 +27,42 @@ TRIMMED_KEYS = (
     "serverConnections", "tadiljSettings",              # network_preferences.xml
 )
 
-ANCHOR = "public abstract class AtakPreferenceFragment extends PreferenceFragment {"
+#: core-ის findPreference()-ის ბოლო (upstream): super → allkeys → return.
+ANCHOR = """        Preference p = super.findPreference(key);
+        if (p == null)
+            p = allkeys.get(key.toString());
+        return p;
+    }"""
 
-GUARD = '''
+REPLACEMENT = """        Preference p = super.findPreference(key);
+        if (p == null)
+            p = allkeys.get(key.toString());
+        if (p == null)
+            p = dhgmTrimmedStub(key);
+        return p;
+    }
 
     // ==== %(marker)s ====
     // DHGM-ში ეს entry-ებ settings-ის XML-იდან ამოღებულია (TAK server / Bluetooth /
     // Accounts / TADIL-J არ სჭირდება). ATAK-ის core მათ უპირობოდ ეძებს და მიღებულ
     // Preference-ზე listener-ს სვამს — null-ზე NPE-ს იძლეოდა settings-ის გახსნისას.
-    // აქ ვაბრუნებთ მიუმაგრებელ dummy-ს: core-ის კოდ უცვლელად მუშაობს, UI-ზე არაფერ ჩანს.
+    // აქ ვაბრუნებთ მიუმაგრებელ stub-ს: core-ის კოდ უცვლელად მუშაობს, UI-ზე არაფერ ჩანს.
     private static final java.util.Set<String> DHGM_TRIMMED_KEYS = new java.util.HashSet<>(
             java.util.Arrays.asList(%(keys)s));
 
     private final Map<String, Preference> dhgmTrimmedStubs = new HashMap<>();
 
-    @Override
-    public Preference findPreference(CharSequence key) {
-        final Preference p = super.findPreference(key);
-        if (p != null || key == null || !DHGM_TRIMMED_KEYS.contains(key.toString())) {
-            return p;
-        }
+    private Preference dhgmTrimmedStub(final CharSequence key) {
+        if (key == null || !DHGM_TRIMMED_KEYS.contains(key.toString()))
+            return null;
         final String k = key.toString();
         Preference stub = dhgmTrimmedStubs.get(k);
         if (stub == null) {
             Context ctx = getActivity();
-            if (ctx == null) {
+            if (ctx == null)
                 ctx = appContext;
-            }
-            if (ctx == null) {
+            if (ctx == null)
                 return null;  // context-ის გარეშე stub-ს ვერ შევქმნით
-            }
             stub = new Preference(ctx);
             stub.setKey(k);
             dhgmTrimmedStubs.put(k, stub);
@@ -64,8 +70,7 @@ GUARD = '''
         }
         return stub;
     }
-    // ==== /%(marker)s ====
-''' % {
+    // ==== /%(marker)s ====""" % {
     "marker": MARKER,
     "keys": ", ".join('"%s"' % k for k in TRIMMED_KEYS),
 }
@@ -76,8 +81,9 @@ def patch(path: Path) -> bool:
     if MARKER in text:
         return False
     if ANCHOR not in text:
-        raise SystemExit("✗ AtakPreferenceFragment-ის ნიმუში ვერ ვიპოვე — upstream შეიცვალა: %s" % path)
-    path.write_text(text.replace(ANCHOR, ANCHOR + GUARD, 1), encoding="utf-8")
+        raise SystemExit("✗ AtakPreferenceFragment.findPreference()-ის ნიმუში ვერ ვიპოვე — "
+                         "upstream შეიცვალა: %s" % path)
+    path.write_text(text.replace(ANCHOR, REPLACEMENT, 1), encoding="utf-8")
     return True
 
 
