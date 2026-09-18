@@ -55,6 +55,9 @@ jobs:
       - name: Plugin JVM tests (BridgeTcpClient, HostPortParser)
         run: bash tools/run-plugin-jvm-tests.sh
 
+      - name: Overlay invariants (source)
+        run: python3 tools/check-overlay-invariants.py --source-only
+
       - name: Generate brand assets (icons + splash)
         run: |
           pip install -q cairosvg pillow
@@ -69,6 +72,9 @@ jobs:
 
       - name: Apply DHGM overlay
         run: ./tools/apply-dhgm-overlay.sh
+
+      - name: Overlay invariants (patches applied)
+        run: python3 tools/check-overlay-invariants.py
 
       - name: Read DHGM version
         id: ver
