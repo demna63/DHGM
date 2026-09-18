@@ -93,6 +93,14 @@ nc <Mac-IP> 14550   # JSON: bridge_hello (პირველი), telemetry, bri
 | 6.5 | პანელი დახურე, follow ჩართულ | რუკა ფონზეც მიჰყვება დრონს |
 | 6.6 | host `x:999999` | ATAK **არ** იხურება; port → 14550 |
 
+## 6b. პარამეტრებ (settings) — regression
+
+| # | შემოწმება | მოსალოდნელი |
+|---|-----------|-------------|
+| 6b.1 | ☰ → პარამეტრებ | ეკრან იხსნება, აპი **არ** იკრაშება |
+| 6b.2 | ყველა ქვე-ეკრან (Callsign, Tools, Display, Control, Support, About) | იხსნებიან |
+| 6b.3 | Network / Accounts / Legacy / Bluetooth / TAK server | სიაში **არ** ჩანან |
+
 ## 7. რეგრესია — უარყოფითი
 
 - [ ] Crash გაშვებისას

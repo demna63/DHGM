@@ -42,6 +42,9 @@ DHGM/
   `@string/`-title-ით (ფაილი ან dir-scan). DHGM-ს TAK server/TADIL-J/Bluetooth/Accounts და
   მთელი Network-branch (`settingsPref`) არ სჭირდება (LAN multicast default; TAK-server ეკრანი
   ATAK-ში programmatic-ია → top-level entry-ს ვჭრით, ეს crash-ვექტორსაც კეტავს).
+- `patch-pref-trim-guard.py` — `AtakPreferenceFragment.findPreference()` override: მოჭრილ
+  key-ებზე stub Preference (core მათ უპირობოდ ეძებს → NPE-ს იძლეოდა settings-ის გახსნისას).
+  key-ების სია **სინქრონში** უნდა იყოს `apply-dhgm-overlay.sh` 9/9-თან.
 - `gen-icons.py` — `custom/brand/dhgm-logo.svg` → `drawable-*` ხატულები (cairosvg).
 - `gen-keystore.sh` — signing keystore გენერაცია.
 - `extract-untranslated.py` — უთარგმნელი სტრინგების სია values-ka-სთვის.
@@ -74,7 +77,12 @@ ATAK core ფაილს პირდაპირ (repo-ში) **არ** ვ�
 1. resource overlay (`custom/overlay/…/res`) — values-ka, colors, ხატულები (upstream უცვლელი).
 2. **ATAK plugin** (`plugin/dhgm-drones`) — custom UI/ფუნქცია, არა core-ის რედაქტირება.
 3. apply-overlay-ის ქირურგიული sed/python-edit-ები core-ზე (build-დროს, იდემპოტენტური):
-   branding, DEV_BANNER, applicationId, Permissions.java, encryption auto-key.
+   branding, DEV_BANNER, applicationId, Permissions.java, encryption auto-key,
+   mount-deadlock fix, settings-trim + trimmed-preference guard.
+
+⚠️ settings-ის XML-იდან entry-ის ამოღება **მარტო** არასოდეს კმარა: core-ში
+`findPreference("<key>").setOnPreferenceClickListener(...)` უპირობოა → NPE. ყოველ ახალ
+მოჭრილ key-ს `tools/patch-pref-trim-guard.py`-ის `TRIMMED_KEYS`-შიც ამატებ.
 
 ## კონვენციები
 - ქართული კომენტარები/დოკები (GCS repo-ს სტილი); კოდის იდენტიფიკატორები ინგლისურად.
