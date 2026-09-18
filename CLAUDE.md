@@ -18,7 +18,7 @@ DHGM/
 │   └── tests/             stdlib unittest (test_cot.py, test_plugin_json.py)
 ├── custom/              ★ ჩვენი მთელი overlay (no hard-fork)
 │   ├── overlay/atak/…    ATAK წყაროზე დასადები ფაილები (rsync-ით ზუსტ ხეზე)
-│   │   ├── res/values-ka/strings.xml   ქართული თარგმანი (ინკრემენტული, ბლოკებად)
+│   │   ├── res/values-ka/strings.xml   ქართული თარგმანი (გენერირებულ; წყარო: custom/translations/)
 │   │   ├── res/values/colors.xml       DroneHub პალიტრა (navy+ცისფერი; 55 name უცვლელი)
 │   │   ├── res/drawable-*/ic_atak_launcher.png   D-ლოგო ხატულა (6 density)
 │   │   └── java/.../Permissions.java   permission gate override (storage-only)
@@ -42,6 +42,10 @@ DHGM/
   `@string/`-title-ით (ფაილი ან dir-scan). DHGM-ს TAK server/TADIL-J/Bluetooth/Accounts და
   მთელი Network-branch (`settingsPref`) არ სჭირდება (LAN multicast default; TAK-server ეკრანი
   ATAK-ში programmatic-ია → top-level entry-ს ვჭრით, ეს crash-ვექტორსაც კეტავს).
+- `sync-ka-translations.py` — ქართულ თარგმანი vs upstream (lock: `custom/translations/
+  ka-upstream.lock.json`): `removed`/`fmt` ბლოკავს, `new`/`stale` გადასათარგმნია.
+  `--todo` გადასათარგმნ XML-ს წერს, `--prune` წაშლილებს აცილებს, `--update` lock-ს ანახლებს.
+  ATAK-ის განახლების პროცედურა: `docs/atak-upgrade.md`.
 - `check-overlay-invariants.py` — CI-ის predohrannik: მოჭრილ settings-key ⊆ guard-ის სია,
   ენის key/default core↔plugin, plugin-ის სტრინგების თარგმანი + format-არგუმენტებ,
   და (overlay-ის შემდეგ) ყოველ patch რეალურად დევს atak/-ში. `--source-only` build-ამდე.

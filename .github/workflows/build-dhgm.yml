@@ -76,6 +76,11 @@ jobs:
       - name: Overlay invariants (patches applied)
         run: python3 tools/check-overlay-invariants.py
 
+      # ATAK_REF-ის აწევისას: removed/format-mismatch ბლოკავს, new/stale — ::warning.
+      # იხ. docs/atak-upgrade.md
+      - name: Translation sync (values-ka vs upstream)
+        run: python3 tools/sync-ka-translations.py --check
+
       - name: Read DHGM version
         id: ver
         run: |

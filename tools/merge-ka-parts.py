@@ -8,7 +8,8 @@ import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KA = os.path.join(ROOT, "custom/overlay/atak/ATAK/app/src/main/res/values-ka/strings.xml")
-PARTS = os.path.join(ROOT, "custom/overlay/atak/ATAK/app/src/main/res/values-ka/parts")
+# ⚠️ parts/ res/-ის გარეთაა: res/values-ka/-ში ქვესაქაღალდე aapt2-ის რესურს-ხეს ბინძურებს.
+PARTS = os.path.join(ROOT, "custom/translations/ka-parts")
 
 
 def main() -> int:
