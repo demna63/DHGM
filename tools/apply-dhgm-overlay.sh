@@ -165,4 +165,9 @@ else
   echo "  ⚠ main_preferences.xml ვერ მოიძებნა — გამოტოვებულია"
 fi
 
+# ⚠️ core უპირობოდ ეძებს ზემოთ მოჭრილ key-ებს (findPreference(...).setOn…) → NPE
+# პარამეტრების გახსნისას. guard მათზე მიუმაგრებელ stub Preference-ს აბრუნებს.
+APF=atak/atak/ATAK/app/src/main/java/com/atakmap/android/preference/AtakPreferenceFragment.java
+python3 tools/patch-pref-trim-guard.py "$APF"
+
 echo "✓ overlay დადებულია"
