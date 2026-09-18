@@ -21,4 +21,15 @@
     <string name="dhgm_conn_tcp">Panel · TCP  %1$s</string>
     <string name="dhgm_bridge_retrying">Connection lost (%1$s) · retrying in %2$d s…</string>
     <string name="dhgm_host_required">Enter the bridge (Mac) IP:port, e.g. 192.168.1.243:14550. 127.0.0.1 works only with adb reverse.</string>
+    <string name="dhgm_lang_title">Language</string>
+    <string name="dhgm_lang_summary">App language: Georgian / English</string>
+    <string name="dhgm_lang_system">System default</string>
+    <string name="dhgm_lang_ka">ქართული</string>
+    <string name="dhgm_lang_en">English</string>
+    <string name="dhgm_apply">Apply</string>
+    <string name="dhgm_cancel">Cancel</string>
+    <string name="dhgm_lang_restart_title">Restart required</string>
+    <string name="dhgm_lang_restart_msg">The language changes after DHGM restarts. Restart now?</string>
+    <string name="dhgm_lang_restart_now">Restart</string>
+    <string name="dhgm_lang_restart_later">Later</string>
 </resources>

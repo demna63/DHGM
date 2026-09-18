@@ -20,4 +20,15 @@
     <string name="dhgm_conn_tcp">პანელი · TCP  %1$s</string>
     <string name="dhgm_bridge_retrying">კავშირი გაწყდა (%1$s) · ხელახლა %2$d წმ-ში…</string>
     <string name="dhgm_host_required">შეიყვანე bridge-ის (Mac-ის) IP:port, მაგ. 192.168.1.243:14550. 127.0.0.1 მხოლოდ adb reverse-ით მუშაობს.</string>
+    <string name="dhgm_lang_title">ენა</string>
+    <string name="dhgm_lang_summary">აპის ენა: ქართული / English</string>
+    <string name="dhgm_lang_system">სისტემის ენა</string>
+    <string name="dhgm_lang_ka">ქართული</string>
+    <string name="dhgm_lang_en">English</string>
+    <string name="dhgm_apply">გამოყენება</string>
+    <string name="dhgm_cancel">გაუქმება</string>
+    <string name="dhgm_lang_restart_title">გადატვირთვა საჭიროა</string>
+    <string name="dhgm_lang_restart_msg">ენა DHGM-ის გადატვირთვის შემდეგ შეიცვლება. გადავტვირთო ახლა?</string>
+    <string name="dhgm_lang_restart_now">გადატვირთვა</string>
+    <string name="dhgm_lang_restart_later">მოგვიანებით</string>
 </resources>

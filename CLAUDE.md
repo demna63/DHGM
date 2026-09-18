@@ -42,6 +42,10 @@ DHGM/
   `@string/`-title-ით (ფაილი ან dir-scan). DHGM-ს TAK server/TADIL-J/Bluetooth/Accounts და
   მთელი Network-branch (`settingsPref`) არ სჭირდება (LAN multicast default; TAK-server ეკრანი
   ATAK-ში programmatic-ია → top-level entry-ს ვჭრით, ეს crash-ვექტორსაც კეტავს).
+- `patch-locale-override.py` — `attachBaseContext` → `com.atakmap.app.DhgmLocale.wrap()`
+  (`MetricFragmentActivity`, `MetricPreferenceActivity`, `ATAKApplication`): აპის ენა
+  მოწყობილობის locale-ისგან დამოუკიდებელია. ნაგულისხმევი — **ქართული** (`DhgmLocale.DEFAULT`),
+  არჩევა: plugin toolbar → „ენა / Language" (pref key `dhgm_language`, ATAK-ის default prefs).
 - `patch-pref-trim-guard.py` — `AtakPreferenceFragment.findPreference()` override: მოჭრილ
   key-ებზე stub Preference (core მათ უპირობოდ ეძებს → NPE-ს იძლეოდა settings-ის გახსნისას).
   key-ების სია **სინქრონში** უნდა იყოს `apply-dhgm-overlay.sh` 9/9-თან.
@@ -90,6 +94,8 @@ ATAK core ფაილს პირდაპირ (repo-ში) **არ** ვ�
 - CoT გენერაცია pure ფუნქციებში (`cot_event`) — ტესტირებადი, ქსელისგან გამიჯნული.
 - დრონის CoT ტიპი: `a-f-A-M-F-Q` (friendly UAV); uid `DHGM.<sysid>`; callsign `DH-<sysid>`.
 - MAVLink sysid 250+ და 0 იგნორირდება (GCS/broadcast).
+- ენის key `dhgm_language` ორ ადგილასაა: `custom/.../com/atakmap/app/DhgmLocale.java` (core) და
+  `DhgmLanguageReceiver` (plugin) — სინქრონში დაიჭირე; ცვლილება გადატვირთვაზე შედის ძალაში.
 - ⚠️ VM/sandbox-ში git-ი exec-bit-ს კარგავს → repo-ში `core.fileMode=false`; ახალ `.sh`-ზე
   `git update-index --chmod=+x`, CI-ში სკრიპტებ `bash tools/…`-ით. (v0.3.0-ის CI ჩავარდა 126-ით.)
 - TCP JSON წყარო — **ერთ**: GCS CotForwarder **ან** bridge; ორივე = uid-კოლიზია (bridge monitor ატყობინებს).
