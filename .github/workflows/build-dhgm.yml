@@ -52,6 +52,9 @@ jobs:
       - name: Bridge unit tests
         run: cd bridge && python3 -m unittest discover -s tests
 
+      - name: Tooling unit tests (verify-apk)
+        run: python3 -m unittest discover -s tools/tests
+
       - name: Plugin JVM tests (BridgeTcpClient, HostPortParser)
         run: bash tools/run-plugin-jvm-tests.sh
 
@@ -344,9 +347,13 @@ jobs:
             ATAK-CIV-ის fork-ებს Play Store-ზე ვერ ავიტანთ (TAK-ის signing/policy), ე.ი. ეს ნორმაა.
 
             ## ✅ ავთენტურობის შემოწმება
-            ხელმომწერ სერტიფიკატ ყოველ release-ზე იგივეა:
-            `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47`
-            (CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, C=GE)
+            ხელმომწერ სერტიფიკატებ ყოველ release-ზე იგივეა
+            (CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, C=GE):
+
+            | APK | cert SHA-256 |
+            |---|---|
+            | app | `C2B69E87A8F024875871BD76F4CA71150987C19F6F39D51E184769CEE6B96A2C` |
+            | plugin | `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47` |
 
             ```bash
             python3 tools/verify-apk.py DHGM-${{ steps.ver.outputs.version }}-app.apk

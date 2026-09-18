@@ -27,20 +27,27 @@ DHGM Play Store-ში არ არის და **ვერც იქნებ
 
 ### ✅ ავთენტურობა — checksum + სერტიფიკატი
 
-ყოველ release-ის აღწერაში დევს ორივე APK-ის SHA-256, და ხელმომწერ სერტიფიკატ **ყოველთვის იგივეა**:
+ყოველ release-ის აღწერაში დევს ორივე APK-ის SHA-256, და ხელმომწერ სერტიფიკატებ
+**ყოველთვის იგივეა** (subject ორივეზე: `CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, L=Tbilisi, C=GE`):
 
-```
-cert SHA-256: C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47
-subject:      CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, L=Tbilisi, C=GE
-```
+| APK | keystore alias | cert SHA-256 |
+|---|---|---|
+| `DHGM-<ver>-app.apk` | `dhgm-debug` | `C2B69E87A8F024875871BD76F4CA71150987C19F6F39D51E184769CEE6B96A2C` |
+| `DHGM-Drones-<ver>.apk` | `dhgm-release` | `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47` |
+
+> **რატომ ორ key?** ATAK-ის `civSdk` ვარიანტ `takDebugKey*`-ს კითხულობს, plugin-ის release
+> build კი `takReleaseKey*`-ს — ორივე ჩვენი ერთი keystore-ის alias-ია. app ასე ხელმოწერილია
+> **v0.2.9-დან** (v0.4.0-იც), ე.ი. key-ის გასწორება = signature mismatch და ყველა
+> მომხმარებელს reinstall (ATAK-ის მონაცემებ და პარამეტრებ იკარგება). ამიტომ ორივე
+> შეგნებულად რჩება; `tools/verify-apk.py` APK-ის სახელით არჩევს, რომელი key მოელოდება.
 
 ჩამოტვირთვის შემდეგ:
 
 ```bash
 python3 tools/verify-apk.py DHGM-0.4.1-app.apk
 #   SHA-256 (ფაილ): …            ← release-ის აღწერას შეადარე
-#   cert SHA-256:   C0FE3B…      ← DHGM-ის key
-#   ✓ DHGM-ის release key
+#   cert SHA-256:   C2B69E…      ← app-ის key
+#   ✓ DHGM-ის app key (keystore alias: dhgm-debug — ATAK civSdk)
 ```
 
 CI იგივე სკრიპტს release-ამდე უშვებს: სხვა key-ით ხელმოწერილ APK release-ში **ვერ მოხვდება**
@@ -52,7 +59,11 @@ CI იგივე სკრიპტს release-ამდე უშვებს
 - სერტიფიკატ 2056 წლამდე ვარგისია.
 - ⚠️ key-ის დაკარგვა = მომხმარებლებ **ვერ განაახლებენ** აპს (ხელახლა დაყენება დასჭირდებათ).
   backup სავალდებულოა (offline, დაშიფრულ).
-- key-ის შეცვლისას: `tools/verify-apk.py`-ში `EXPECTED_CERT_SHA256` და ეს დოკუმენტი განაახლე.
+- key-ის შეცვლისას: `tools/verify-apk.py`-ში `APP_CERT_SHA256` / `PLUGIN_CERT_SHA256`,
+  `.github/workflows/build-dhgm.yml`-ის release notes და ეს დოკუმენტი განაახლე
+  (`tools/tests/test_verify_apk.py` ცხრილს ამოწმებს).
+- ⚠️ app-ის key-ის შეცვლა მომხმარებლებს **in-place განახლებას უკეტავს** — მხოლოდ
+  major ვერსიაზე, წინასწარი წაშლის ინსტრუქციით.
 
 ### 📋 Android developer verification — DHGM-ის გეგმა
 
@@ -84,8 +95,8 @@ Google ითხოვს Android-ზე გავრცელებულ ა�
 - [ ] Android Developer Console — ანგარიშ (იხ. [developer.android.com/developer-verification](https://developer.android.com/developer-verification))
 - [ ] package `ge.dronehub.dhgm` (app) — უნიკალურია, ATAK-ის `com.atakmap.app`-ს არ ეჯახება
 - [ ] package `ge.dronehub.dhgm.plugin` (plugin APK) — ცალკე რეგისტრაცია
-- [ ] signing key: cert SHA-256 `C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47`
-      (ერთ package-ზე რამდენიმე key შეიძლება — key rotation-ის გზა ღიაა)
+- [ ] signing key-ებ: app `C2B69E87…`, plugin `C0FE3B24…` (ორივე დასარეგისტრირებელია —
+      ერთ package-ზე რამდენიმე key შეიძლება, ე.ი. key rotation-ის გზაც ღიაა)
 - [ ] key-ის offline backup — დაკარგვა = ვერც განახლება, ვერც ვერიფიკაცია
 
 #### escape hatch-ებ (თუ რეგისტრაცია დაგვიანდა)

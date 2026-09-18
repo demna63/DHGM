@@ -7,7 +7,7 @@ Play Protect self-signed APK-ზე გაფრთხილებას აჩ�
   * APK-ის SHA-256 (ფაილ არ შეცვლილა)
   * ხელმომწერ სერტიფიკატის SHA-256 (იგივე DHGM-ის key-ია)
 
-    python3 tools/verify-apk.py DHGM-0.4.0-app.apk        # ორივეს ბეჭდავს + ადარებს
+    python3 tools/verify-apk.py DHGM-0.4.1-app.apk        # ორივეს ბეჭდავს + ადარებს
     python3 tools/verify-apk.py --print-only file.apk     # მხოლოდ ბეჭდავს (ახალ key-ზე)
 
 exit 1 — თუ სერტიფიკატი მოსალოდნელს არ ემთხვევა (ე.ი. APK სხვა key-ითაა ხელმოწერილ).
@@ -17,15 +17,41 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import subprocess
 import sys
 import zipfile
 
-#: DHGM-ის release key-ის სერტიფიკატი (public ინფორმაცია — შედარებისთვისაა).
-#: CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, L=Tbilisi, C=GE
-EXPECTED_CERT_SHA256 = (
-    "C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47"
-)
+#: DHGM-ის ორ signing key — ერთ keystore-ში, ორ alias-ზე (public ინფო, შედარებისთვისაა).
+#: ორივეს subject: CN=DroneHub Georgia, O=DroneHub Georgia, OU=DHGM, L=Tbilisi, C=GE
+#:
+#: ATAK-ის `civSdk` ვარიანტ takDebugKey*-ს იყენებს, plugin-ის release build კი
+#: takReleaseKey*-ს — ე.ი. app და plugin **სხვადასხვა key-ითაა** ხელმოწერილ და ასეა
+#: v0.2.9-დან. app-ის key-ის შეცვლა = ყველა მომხმარებელს reinstall (signature mismatch,
+#: ATAK-ის მონაცემებ იკარგება), ამიტომ ამ ორს შეგნებულად ვინარჩუნებთ. იხ. docs/distribution.md
+APP_CERT_SHA256 = "C2B69E87A8F024875871BD76F4CA71150987C19F6F39D51E184769CEE6B96A2C"
+PLUGIN_CERT_SHA256 = "C0FE3B24250D78FB6CDB000623D84C446444FFC01E4D5A2A435CDC041675EA47"
+
+KEY_LABEL = {
+    APP_CERT_SHA256: "app key (keystore alias: dhgm-debug — ATAK civSdk)",
+    PLUGIN_CERT_SHA256: "plugin key (keystore alias: dhgm-release)",
+}
+
+
+def expected_cert(path: str) -> tuple[str | None, str]:
+    """ფაილის სახელიდან → (მოსალოდნელ cert, არტეფაქტის როლ).
+
+    CI-ის „Stage release assets" ნაბიჯ სახელებს დეტერმინისტულად არქმევს
+    (`DHGM-<ver>-app.apk`, `DHGM-Drones-<ver>.apk`), ე.ი. როლ სახელით იკითხება.
+    უცნობ სახელზე (ლოკალურ build) კონკრეტულ key-ს არ ვითხოვთ — მხოლოდ იმას,
+    რომ DHGM-ის ორიდან ერთ-ერთი იყოს.
+    """
+    base = os.path.basename(path).lower()
+    if "drones" in base or "plugin" in base:
+        return PLUGIN_CERT_SHA256, "plugin"
+    if base.endswith("-app.apk"):
+        return APP_CERT_SHA256, "app"
+    return None, "უცნობ"
 
 
 def sha256_file(path: str) -> str:
@@ -78,12 +104,19 @@ def main() -> int:
               % (apk, sha256_file(apk), subject or "—", fp))
         if args.print_only:
             continue
-        if fp != EXPECTED_CERT_SHA256:
-            print("  ✗ სერტიფიკატი არ ემთხვევა DHGM-ის key-ს (მოსალოდნელი %s)"
-                  % EXPECTED_CERT_SHA256, file=sys.stderr)
+        want, role = expected_cert(apk)
+        if want is None:
+            if fp in KEY_LABEL:
+                print("  ✓ DHGM-ის %s" % KEY_LABEL[fp])
+            else:
+                print("  ✗ სერტიფიკატი არცერთ DHGM key-ს არ ემთხვევა", file=sys.stderr)
+                bad += 1
+        elif fp != want:
+            print("  ✗ %s-ის key არ ემთხვევა (მოსალოდნელი %s — %s)"
+                  % (role, want, KEY_LABEL[want]), file=sys.stderr)
             bad += 1
         else:
-            print("  ✓ DHGM-ის release key")
+            print("  ✓ DHGM-ის %s" % KEY_LABEL[fp])
     return 1 if bad else 0
 
 
