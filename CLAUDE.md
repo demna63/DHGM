@@ -42,6 +42,9 @@ DHGM/
   `@string/`-title-ით (ფაილი ან dir-scan). DHGM-ს TAK server/TADIL-J/Bluetooth/Accounts და
   მთელი Network-branch (`settingsPref`) არ სჭირდება (LAN multicast default; TAK-server ეკრანი
   ATAK-ში programmatic-ია → top-level entry-ს ვჭრით, ეს crash-ვექტორსაც კეტავს).
+- `check-overlay-invariants.py` — CI-ის predohrannik: მოჭრილ settings-key ⊆ guard-ის სია,
+  ენის key/default core↔plugin, plugin-ის სტრინგების თარგმანი + format-არგუმენტებ,
+  და (overlay-ის შემდეგ) ყოველ patch რეალურად დევს atak/-ში. `--source-only` build-ამდე.
 - `patch-locale-override.py` — `attachBaseContext` → `com.atakmap.app.DhgmLocale.wrap()`
   (`MetricFragmentActivity`, `MetricPreferenceActivity`, `ATAKApplication`): აპის ენა
   მოწყობილობის locale-ისგან დამოუკიდებელია. ნაგულისხმევი — **ქართული** (`DhgmLocale.DEFAULT`),

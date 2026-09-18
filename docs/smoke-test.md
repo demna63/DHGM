@@ -111,6 +111,15 @@ nc <Mac-IP> 14550   # JSON: bridge_hello (პირველი), telemetry, bri
 | 6c.4 | ისევ ქართული | UI ქართული; არჩევანი გადატვირთვის შემდეგაც რჩება |
 | 6c.5 | „სისტემის ენა" | მოწყობილობის locale-ს მიჰყვება |
 
+## 6d. ავტომატურ შემოწმებებ (CI-ზე და ლოკალურად)
+
+```bash
+cd bridge && python3 -m unittest discover -s tests     # 34
+bash tools/run-plugin-jvm-tests.sh                      # 25 (JDK საჭიროა)
+python3 tools/check-overlay-invariants.py --source-only # key/თარგმან/format ინვარიანტებ
+python3 tools/check-overlay-invariants.py               # + patch-ებ atak/-ში (overlay-ის შემდეგ)
+```
+
 ## 7. რეგრესია — უარყოფითი
 
 - [ ] Crash გაშვებისას
