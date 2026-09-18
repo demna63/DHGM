@@ -30,10 +30,12 @@ fi
 
 echo "== ტესტებ =="
 (cd bridge && python3 -m unittest discover -s tests)
-if command -v javac >/dev/null; then
+# macOS-ზე /usr/bin/javac shim-ია და JDK-ის გარეშე შეცდომით ვარდება (set -e → release
+# ჩერდებოდა), ამიტომ არსებობას კი არა, რეალურ მუშაობას ვამოწმებთ.
+if javac -version >/dev/null 2>&1; then
   bash tools/run-plugin-jvm-tests.sh
 else
-  echo "⚠ javac არ მოიძებნა — plugin JVM ტესტებ CI-ზე ეშვევიან"
+  echo "⚠ მუშა JDK არ მოიძებნა — plugin JVM ტესტებ გამოტოვდა (CI-ზე გაეშვება)"
 fi
 
 echo
