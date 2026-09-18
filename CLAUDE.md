@@ -46,6 +46,8 @@ DHGM/
   ka-upstream.lock.json`): `removed`/`fmt` ბლოკავს, `new`/`stale` გადასათარგმნია.
   `--todo` გადასათარგმნ XML-ს წერს, `--prune` წაშლილებს აცილებს, `--update` lock-ს ანახლებს.
   ATAK-ის განახლების პროცედურა: `docs/atak-upgrade.md`.
+- `verify-apk.py` — release APK-ის SHA-256 + ხელმომწერ სერტიფიკატ; CI-ში release-ამდე ეშვება
+  (სხვა key = release ვარდება). Play Protect/ვერიფიკაციის კონტექსტი: `docs/distribution.md`.
 - `check-overlay-invariants.py` — CI-ის predohrannik: მოჭრილ settings-key ⊆ guard-ის სია,
   ენის key/default core↔plugin, plugin-ის სტრინგების თარგმანი + format-არგუმენტებ,
   და (overlay-ის შემდეგ) ყოველ patch რეალურად დევს atak/-ში. `--source-only` build-ამდე.
