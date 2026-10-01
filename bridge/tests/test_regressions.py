@@ -284,3 +284,234 @@ class TestRcRssi(unittest.TestCase):
         handle_mavlink_msg(states, _Msg("RC_CHANNELS", rssi=255), 2.0, _mode)
         self.assertNotIn("rc_rssi_pct", telemetry_payload(states[1], 2.0))
         json.dumps(payload)
+
+
+class TestFrozenPosition(unittest.TestCase):
+    """GPS-ის დაკარგვისას HEARTBEAT last_seen-ს ანახლებდა → ბოლო lat/lon „ცოცხლად" იგზავნებოდა."""
+
+    def test_heartbeats_do_not_keep_lost_position_active(self):
+        states = {}
+        handle_mavlink_msg(states, _gpi(), 100.0, _mode)
+        self.assertTrue(states[1].is_active(100.0, 10.0))
+        # fix დაიკარგა: PX4/ArduPilot 0,0-ს აგზავნის, link კი ცოცხალია.
+        handle_mavlink_msg(states, _gpi(lat=0, lon=0), 160.0, _mode)
+        handle_mavlink_msg(states, _Msg("HEARTBEAT", autopilot=12, custom_mode=4), 160.0, _mode)
+        handle_mavlink_msg(states, _Msg("VFR_HUD", groundspeed=0.0), 160.0, _mode)
+        handle_mavlink_msg(states, _Msg("GPS_RAW_INT", fix_type=0, satellites_visible=0,
+                                        alt=0), 160.0, _mode)
+        st = states[1]
+        self.assertEqual(st.last_seen, 160.0)
+        self.assertEqual(st.pos_seen, 100.0)
+        self.assertFalse(st.is_active(160.0, 10.0))
+
+    def test_position_reactivates(self):
+        states = {}
+        handle_mavlink_msg(states, _gpi(), 100.0, _mode)
+        handle_mavlink_msg(states, _gpi(), 200.0, _mode)
+        self.assertTrue(states[1].is_active(205.0, 10.0))
+
+    def test_no_fix_never_active(self):
+        st = DroneState(1)
+        st.pos_seen = 100.0
+        self.assertFalse(st.is_active(100.0, 10.0))
+
+
+class TestSatellitesUnknown(unittest.TestCase):
+    """MAVLink: satellites_visible = UINT8_MAX (255) → unknown, არა „255 თანამგზავრი"."""
+
+    def test_uint8_max_is_unknown(self):
+        import json
+        from plugin_json import telemetry_line
+
+        states = {}
+        handle_mavlink_msg(states, _gpi(), 1.0, _mode)
+        handle_mavlink_msg(states, _Msg("GPS_RAW_INT", fix_type=3, satellites_visible=255,
+                                        alt=550000), 1.0, _mode)
+        self.assertIsNone(states[1].satellites)
+        self.assertNotIn("satellites", json.loads(telemetry_line(states[1], 1.0)))
+
+    def test_zero_is_known(self):
+        states = {}
+        handle_mavlink_msg(states, _Msg("GPS_RAW_INT", fix_type=0, satellites_visible=0,
+                                        alt=0), 1.0, _mode)
+        self.assertEqual(states[1].satellites, 0)
+
+
+class TestScheduling(unittest.TestCase):
+    """--rate: ვალიდაცია + heartbeat CoT tick-ისგან დამოუკიდებლად."""
+
+    def test_next_deadline_keeps_phase(self):
+        from dhgm_bridge import next_deadline
+
+        self.assertEqual(next_deadline(10.0, 1.0, 10.2), 11.0)
+
+    def test_next_deadline_skips_missed_ticks(self):
+        from dhgm_bridge import next_deadline
+
+        self.assertEqual(next_deadline(10.0, 1.0, 15.5), 16.5)
+
+    def test_positive_float_rejects_invalid(self):
+        import argparse
+        from dhgm_bridge import _positive_float
+
+        self.assertEqual(_positive_float("0.5"), 0.5)
+        for bad in ("0", "-1", "nan", "inf", "x"):
+            with self.assertRaises(argparse.ArgumentTypeError, msg=bad):
+                _positive_float(bad)
+
+    def test_rate_zero_rejected_by_cli(self):
+        import subprocess
+
+        r = subprocess.run([sys.executable, _BRIDGE, "--sim", "--dry-run", "--rate", "0",
+                            "--max-ticks", "2"], capture_output=True, text=True, timeout=20)
+        self.assertEqual(r.returncode, 2)
+        self.assertNotIn("ZeroDivisionError", r.stderr)
+
+    def test_heartbeat_1hz_at_low_rate(self):
+        import json
+        import re
+        import subprocess
+
+        proc = subprocess.Popen([sys.executable, "-u", _BRIDGE, "--sim", "--no-multicast",
+                                 "--rate", "0.1", "--plugin-tcp", "127.0.0.1:0"],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        try:
+            port = None
+            for _ in range(20):
+                m = re.search(r"adb reverse tcp:(\d+)", proc.stderr.readline())
+                if m:
+                    port = int(m.group(1))
+                    break
+            self.assertIsNotNone(port, "bridge-მა plugin port არ დაბეჭდა")
+            c = socket.create_connection(("127.0.0.1", port), timeout=5)
+            try:
+                f = c.makefile("r", encoding="utf-8")
+                start = time.time()
+                beats = 0
+                while time.time() - start < 3.5:
+                    if json.loads(f.readline())["type"] == "bridge_heartbeat":
+                        beats += 1
+                # 0.1 Hz-ზე (ძველი ქცევა) 3.5 წმ-ში ≤ 1 heartbeat იქნებოდა.
+                self.assertGreaterEqual(beats, 3)
+            finally:
+                c.close()
+        finally:
+            proc.terminate()
+            proc.wait(10)
+            proc.stderr.close()
+
+
+class _FakeConn:
+    def __init__(self, script):
+        self._script = list(script)
+        self.closed = False
+
+    def recv_match(self, blocking=True, timeout=1.0):
+        item = self._script.pop(0) if self._script else None
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    def close(self):
+        self.closed = True
+
+
+class TestMavlinkLoopResilience(unittest.TestCase):
+    """recv/connect-ის exception MAVLink thread-ს ჩუმად კლავდა — bridge „ცოცხალი" ჩანდა."""
+
+    def _run(self, conns, max_recv):
+        from dhgm_bridge import mavlink_loop
+
+        calls = {"recv": 0}
+        made = []
+        sleeps = []
+
+        def connect():
+            item = conns.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            orig = item.recv_match
+
+            def counted(**kw):
+                calls["recv"] += 1
+                return orig(**kw)
+            item.recv_match = counted
+            made.append(item)
+            return item
+
+        states = {}
+        mavlink_loop("0.0.0.0:0", states, threading.Lock(), connect=connect,
+                     mode_string=_mode, should_run=lambda: calls["recv"] < max_recv and bool(
+                         conns or made), sleep=sleeps.append)
+        return states, made, sleeps
+
+    def test_reconnects_after_connect_and_recv_errors(self):
+        conns = [OSError("bind failed"),
+                 _FakeConn([_gpi(), OSError("socket died")]),
+                 _FakeConn([_gpi(sysid=2)])]
+        states, made, sleeps = self._run(conns, max_recv=3)
+        self.assertEqual(sorted(states), [1, 2])
+        self.assertTrue(all(c.closed for c in made))
+        self.assertEqual(sleeps, [1.0, 1.0])  # ვალიდური შეტყობინება backoff-ს აბრუნებს
+
+    def test_backoff_grows_and_caps(self):
+        conns = [OSError("e")] * 6 + [_FakeConn([])]
+        _states, _made, sleeps = self._run(conns, max_recv=1)
+        self.assertEqual(sleeps, [1.0, 2.0, 4.0, 8.0, 10.0, 10.0])
+
+    def test_bad_message_does_not_kill_loop(self):
+        broken = _Msg("GLOBAL_POSITION_INT")  # ველების გარეშე → AttributeError
+        states, _made, sleeps = self._run([_FakeConn([broken, _gpi()])], max_recv=2)
+        self.assertAlmostEqual(states[1].lat, 41.7151)
+        self.assertEqual(sleeps, [])
+
+
+class TestHubIsolation(unittest.TestCase):
+    """ჩეჭდილ კლიენტი broadcast-ს (lock-ის ქვეშ sendall) და სხვა კლიენტებს აყოვნებდა."""
+
+    def test_stalled_client_does_not_delay_broadcast_or_others(self):
+        import json
+
+        hub = PluginTcpHub("127.0.0.1:0", send_timeout_s=2.0, queue_max=10000)
+        try:
+            stalled = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            stalled.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+            stalled.connect(("127.0.0.1", hub.port))
+            healthy = socket.create_connection(("127.0.0.1", hub.port), timeout=5)
+            deadline = time.time() + 3
+            while hub.client_count() < 2 and time.time() < deadline:
+                time.sleep(0.05)
+            self.assertEqual(hub.client_count(), 2)
+
+            reader = healthy.makefile("r", encoding="utf-8")
+            pad = "x" * 1000
+            t0 = time.time()
+            for i in range(2000):  # ~2 MB — stalled-ის ბუფერს ბევრჯერ აჭარბებს
+                hub.broadcast(json.dumps({"i": i, "pad": pad}))
+            self.assertLess(time.time() - t0, 0.5, "broadcast ბლოკირდა")
+            for i in range(2000):
+                self.assertEqual(json.loads(reader.readline())["i"], i)
+            stalled.close()
+            healthy.close()
+        finally:
+            hub.close()
+
+    def test_queue_overflow_drops_client(self):
+        hub = PluginTcpHub("127.0.0.1:0", queue_max=4)
+        try:
+            c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            c.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+            c.connect(("127.0.0.1", hub.port))
+            deadline = time.time() + 3
+            while hub.client_count() == 0 and time.time() < deadline:
+                time.sleep(0.05)
+            line = "y" * 100000
+            for _ in range(50):
+                hub.broadcast(line)
+            self.assertEqual(hub.client_count(), 0)
+            c.close()
+        finally:
+            hub.close()
+
+
+_BRIDGE = os.path.join(os.path.dirname(__file__), "..", "dhgm_bridge.py")

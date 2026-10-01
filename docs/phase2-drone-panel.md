@@ -134,7 +134,13 @@ RSSI:           -72 dBm
   ბარათზე „RC 87%", < 30% → „⚠ RC 25%".
 
 
+- `satellites` — `GPS_RAW_INT.satellites_visible`; 255 (unknown) → ველი არ იგზავნება.
+
 ### `drone_gone` (stale timeout შემდეგ)
+
+stale = ბოლო **ვალიდური პოზიციიდან** (`GLOBAL_POSITION_INT`, არა 0,0) `--stale` წმ. GPS-ის
+დაკარგვისას HEARTBEAT კვლავ მოდის, მაგრამ დრონს ცოცხლად აღარ ინარჩუნებს — ბოლო lat/lon
+ახალი timestamp-ით აღარ იგზავნება.
 
 ```json
 {"type": "drone_gone", "sysid": 1, "reason": "stale"}
@@ -148,9 +154,10 @@ RSSI:           -72 dBm
 {"type": "bridge_hello", "version": "0.1.0", "drones": [1]}
 ```
 
-### `bridge_heartbeat` (keepalive, 1 Hz / tick)
+### `bridge_heartbeat` (keepalive, 1 Hz)
 
-იგზავნება ყოველ tick-ზე, დრონებ ყონ თუ არა. plugin-ი 5 წმ-ის სიჩუმეს (read timeout)
+იგზავნება 1 Hz-ზე, დრონებ ყონ თუ არა — **`--rate`-ისგან დამოუკიდებლად** (დაბალ CoT
+სიხშირეზეც, მაგ. `--rate 0.1`). plugin-ი 5 წმ-ის სიჩუმეს (read timeout)
 კავშირის გაწყვეტად ათვლის და exponential backoff-ით (1→10 წმ) ხელახლა უკავშირდება —
 ასე აღმოჩნდება „ჩუმად" მკვდარ bridge (Wi-Fi drop, FIN-ის გარეშე).
 
