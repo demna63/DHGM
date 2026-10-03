@@ -33,6 +33,10 @@ UINT16_MAX = 65535
 HAE_UNKNOWN = 9999999.0                   # CoT სპეკი: უცნობი სიმაღლე
 GEOID_SEP_MAX_M = 120.0                   # |N| EGM96-ში ≤ ~107 მ — sanity გარდა
 MAV_AUTOPILOT_INVALID = 8                 # gimbal/camera/companion — რეჟიმს არ ფლობს
+UINT8_MAX = 255                           # GPS_RAW_INT.satellites_visible: unknown
+HEARTBEAT_INTERVAL_S = 1.0                # plugin-ის read timeout 5 წმ → 1 Hz სავალდებულოა
+MAVLINK_BACKOFF_MIN_S = 1.0               # MAVLink-ის ხელახლა გახსნის backoff
+MAVLINK_BACKOFF_MAX_S = 10.0
 
 # სიმულაციის საწყისი წერტილი — თბილისი
 SIM_CENTER_LAT = 41.7151
@@ -62,11 +66,19 @@ class DroneState:
         # RC link (RC_CHANNELS.rssi → %). ExpressLRS/CRSF: PX4 — LQ; ArduPilot — RSSI
         # ან LQ (RC_OPTIONS bit 10 „Use LQ instead of normalised RSSI").
         self.rc_rssi_pct: Optional[int] = None
+        # last_seen — ნებისმიერი შეტყობინება (link ცოცხალია); pos_seen — მხოლოდ ვალიდური
+        # პოზიცია. active-ობა pos_seen-ით: GPS-ის დაკარგვისას HEARTBEAT კვლავ მოდის და
+        # last_seen-ით ბოლო lat/lon „ცოცხლად" (ახალი time-ით) გაიგზავნებოდა.
         self.last_seen = 0.0
+        self.pos_seen = 0.0
 
     @property
     def has_fix(self) -> bool:
         return self.lat is not None and self.lon is not None
+
+    def is_active(self, now: float, stale_s: float) -> bool:
+        """პოზიცია ცნობილია და ``stale_s``-ზე ძველი არ არის (CoT/telemetry იგზავნება)."""
+        return self.has_fix and now - self.pos_seen < stale_s
 
     @property
     def course(self) -> float:
@@ -223,6 +235,7 @@ def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
         st.vy = msg.vy / 100.0
         st.heading = None if msg.hdg == UINT16_MAX else msg.hdg / 100.0
         st.last_seen = now
+        st.pos_seen = now
     elif t == "VFR_HUD":
         st.groundspeed = msg.groundspeed
         st.last_seen = now
@@ -231,7 +244,7 @@ def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
     elif t == "GPS_RAW_INT":
         from plugin_json import gps_fix_name
         st.gps_fix = gps_fix_name(msg.fix_type)
-        st.satellites = msg.satellites_visible
+        st.satellites = None if msg.satellites_visible == UINT8_MAX else msg.satellites_visible
         # MAVLink2 extension; 0 = არ არის. N = HAE − MSL ერთი და იგივე GPS-იდან.
         alt_ellipsoid = getattr(msg, "alt_ellipsoid", 0) or 0
         if msg.fix_type >= 3 and alt_ellipsoid != 0:
@@ -252,18 +265,60 @@ def handle_mavlink_msg(states: Dict[int, DroneState], msg, now: float,
             st.flight_mode = str(msg.custom_mode)
 
 
-def mavlink_loop(conn_str: str, states: Dict[int, DroneState], lock: threading.Lock) -> None:
-    """კითხულობს MAVLink ნაკადს და ანახლებს დრონების მდგომარეობას (daemon thread)."""
-    from pymavlink import mavutil  # lazy import — --sim რეჟიმს არ სჭირდება
+def mavlink_loop(conn_str: str, states: Dict[int, DroneState], lock: threading.Lock,
+                 connect: Optional[Callable[[], object]] = None,
+                 mode_string: Optional[Callable[[object], str]] = None,
+                 should_run: Callable[[], bool] = lambda: True,
+                 sleep: Callable[[float], None] = time.sleep) -> None:
+    """კითხულობს MAVLink ნაკადს და ანახლებს დრონების მდგომარეობას (daemon thread).
 
-    conn = mavutil.mavlink_connection("udpin:" + conn_str, source_system=250)
-    print("[dhgm] ველოდები MAVLink-ს udpin:%s (GCS → Settings → MAVLink → forwarding)" % conn_str)
-    while True:
-        msg = conn.recv_match(blocking=True, timeout=1.0)
-        if msg is None or msg.get_type() == "BAD_DATA":
-            continue
-        with lock:
-            handle_mavlink_msg(states, msg, time.time(), mavutil.mode_string_v10)
+    კავშირის შეცდომა (bind ვერ მოხერხდა, socket error) thread-ს აღარ კლავს: stderr-ზე
+    ილოგება და კავშირი exponential backoff-ით ხელახლა იხსნება. ერთი ცუდი შეტყობინება
+    (``handle_mavlink_msg``-ის exception) მხოლოდ ილოგება.
+
+    ``connect``/``mode_string``/``should_run``/``sleep`` — ტესტებისთვის (default: pymavlink).
+    """
+    if connect is None or mode_string is None:
+        from pymavlink import mavutil  # lazy import — --sim რეჟიმს არ სჭირდება
+
+        if connect is None:
+            def connect():
+                return mavutil.mavlink_connection("udpin:" + conn_str, source_system=250)
+        if mode_string is None:
+            mode_string = mavutil.mode_string_v10
+
+    backoff = MAVLINK_BACKOFF_MIN_S
+    while should_run():
+        conn = None
+        try:
+            conn = connect()
+            print("[dhgm] ველოდები MAVLink-ს udpin:%s (GCS → Settings → MAVLink → forwarding)"
+                  % conn_str, file=sys.stderr)
+            while should_run():
+                msg = conn.recv_match(blocking=True, timeout=1.0)
+                if msg is None or msg.get_type() == "BAD_DATA":
+                    continue
+                backoff = MAVLINK_BACKOFF_MIN_S
+                try:
+                    with lock:
+                        handle_mavlink_msg(states, msg, time.time(), mode_string)
+                except Exception as e:  # noqa: BLE001 — ერთი შეტყობინება loop-ს არ კლავს
+                    print("[dhgm] MAVLink %s დამუშავება ვერ მოხერხდა: %r"
+                          % (msg.get_type(), e), file=sys.stderr)
+            return
+        except Exception as e:  # noqa: BLE001 — კავშირის ნებისმიერ შეცდომაზე reconnect
+            print("[dhgm] ⚠ MAVLink კავშირი (%s): %r — ხელახლა %.0f წმ-ში"
+                  % (conn_str, e, backoff), file=sys.stderr)
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:  # noqa: BLE001
+                    pass
+        if not should_run():
+            return
+        sleep(backoff)
+        backoff = min(backoff * 2.0, MAVLINK_BACKOFF_MAX_S)
 
 
 def snapshot_states(states: Dict[int, DroneState], lock: threading.Lock) -> List[DroneState]:
@@ -292,6 +347,7 @@ def sim_step(st: DroneState, t0: float, index: int = 0) -> None:
     st.gps_fix = "3D"
     st.satellites = 12 - index
     st.last_seen = time.time()
+    st.pos_seen = st.last_seen
 
 
 def foreign_dhgm_sysid(datagram: bytes, instance: str) -> Optional[int]:
@@ -362,6 +418,23 @@ class ForeignSourceMonitor:
                       "ეს bridge." % (sysid, addr[0]), file=sys.stderr)
 
 
+def next_deadline(deadline: float, period: float, now: float) -> float:
+    """პერიოდული განრიგის შემდეგ deadline — ფაზას ინარჩუნებს; ჩამორჩენისას (ძილი/GC)
+    tick-ების „დაწევის" ნაცვლად ``now``-იდან ითვლის."""
+    nxt = deadline + period
+    return nxt if nxt > now else now + period
+
+
+def _positive_float(text: str) -> float:
+    try:
+        v = float(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("რიცხვი უნდა იყოს: %r" % text)
+    if not (v > 0 and math.isfinite(v)):
+        raise argparse.ArgumentTypeError("დადებითი უნდა იყოს: %r" % text)
+    return v
+
+
 def _lan_ipv4s() -> List[str]:
     """ლოკალურ LAN IPv4-ებ (hint-ისთვის; ქსელ ტრაფიკ არ იგზავნება — UDP connect)."""
     ips: List[str] = []
@@ -385,8 +458,10 @@ def main() -> int:
                    help="დამატებითი unicast CoT მიმღები (მაგ. ტაბლეტის IP:4242); მეორდება")
     p.add_argument("--no-multicast", action="store_true",
                    help="არ გააგზავნო %s multicast-ზე" % DEFAULT_MULTICAST)
-    p.add_argument("--rate", type=float, default=1.0, help="CoT სიხშირე Hz (default: 1)")
-    p.add_argument("--stale", type=float, default=10.0, help="CoT stale ფანჯარა წმ (default: 10)")
+    p.add_argument("--rate", type=_positive_float, default=1.0,
+                   help="CoT სიხშირე Hz (default: 1); plugin heartbeat ყოველთვის 1 Hz")
+    p.add_argument("--stale", type=_positive_float, default=10.0,
+                   help="CoT stale ფანჯარა წმ (default: 10)")
     p.add_argument("--prefix", default="DH", help="callsign პრეფიქსი (default: DH)")
     p.add_argument("--sim", action="store_true", help="სიმულირებული დრონი MAVLink-ის გარეშე")
     p.add_argument("--sim-drones", type=int, default=1, metavar="N",
@@ -445,34 +520,44 @@ def main() -> int:
         print("[dhgm] CoT → %s" % ", ".join("%s:%d" % t for t in sender.targets), file=sys.stderr)
 
     ticks = 0
+    period = 1.0 / args.rate
+    next_tick = time.time()
+    # heartbeat CoT tick-ისგან დამოუკიდებელია: --rate < 0.2 Hz-ზე plugin-ის 5 წმ read
+    # timeout tick-ზე მიბმული heartbeat-ით ამოიწურებოდა (მუდმივი reconnect).
+    next_hb = next_tick
     try:
         while True:
             now = time.time()
-            if args.sim:
-                for i, sysid in enumerate(sorted(states)):
-                    sim_step(states[sysid], t0, index=i)
-            current_active: Set[int] = set()
-            outgoing = []
-            # lock-ის ქვეშ მხოლოდ serialization; ქსელური I/O — lock-ის გარეთ.
-            with states_lock:
-                for st in states.values():
-                    if st.has_fix and now - st.last_seen < args.stale:
-                        current_active.add(st.sysid)
-                        outgoing.append((cot_event(st, now, args.stale, args.prefix, instance),
-                                         telemetry_line(st, now, args.prefix) if plugin_hub else None))
-            for cot, line in outgoing:
-                sender.send(cot)
-                if plugin_hub and line:
-                    plugin_hub.broadcast(line)
-            if plugin_hub:
-                for gone in active_sysids - current_active:
-                    plugin_hub.broadcast(drone_gone_line(gone))
+            if now >= next_tick:
+                if args.sim:
+                    for i, sysid in enumerate(sorted(states)):
+                        sim_step(states[sysid], t0, index=i)
+                current_active: Set[int] = set()
+                outgoing = []
+                # lock-ის ქვეშ მხოლოდ serialization; ქსელური I/O — lock-ის გარეთ.
+                with states_lock:
+                    for st in states.values():
+                        if st.is_active(now, args.stale):
+                            current_active.add(st.sysid)
+                            outgoing.append((cot_event(st, now, args.stale, args.prefix, instance),
+                                             telemetry_line(st, now, args.prefix) if plugin_hub else None))
+                for cot, line in outgoing:
+                    sender.send(cot)
+                    if plugin_hub and line:
+                        plugin_hub.broadcast(line)
+                if plugin_hub:
+                    for gone in active_sysids - current_active:
+                        plugin_hub.broadcast(drone_gone_line(gone))
+                active_sysids = current_active
+                ticks += 1
+                next_tick = next_deadline(next_tick, period, now)
+            if plugin_hub and now >= next_hb:
                 plugin_hub.broadcast(bridge_heartbeat_line(now))
-            active_sysids = current_active
-            ticks += 1
+                next_hb = next_deadline(next_hb, HEARTBEAT_INTERVAL_S, now)
             if args.max_ticks and ticks >= args.max_ticks:
                 break
-            time.sleep(1.0 / args.rate)
+            wake = min(next_tick, next_hb) if plugin_hub else next_tick
+            time.sleep(max(0.0, wake - time.time()))
     except KeyboardInterrupt:
         print("\n[dhgm] გაჩერდა", file=sys.stderr)
     finally:
